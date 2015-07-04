@@ -20,6 +20,5 @@ setup(name='descent',
           'Topic :: Scientific/Engineering :: Information Analysis'],
       packages=['descent'],
       package_dir={'descent': ''},
-      py_modules=['algorithms', 'utils'],
       license='LICENSE.md'
       )
