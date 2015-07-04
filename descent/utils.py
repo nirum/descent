@@ -46,4 +46,3 @@ def enforce(typeclass, arg):
     """Asserts that the input is of a given typeclass"""
 
     assert type(arg) == typeclass, "Input must be of " + str(typeclass)
-

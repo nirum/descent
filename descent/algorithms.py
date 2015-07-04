@@ -1,6 +1,10 @@
+"""
+First order gradient descent algorithms
+"""
 
 
 def gd(df, x0, eta=0.1):
+    """Gradient descent"""
 
     xk = x0
     while True:
@@ -9,6 +13,7 @@ def gd(df, x0, eta=0.1):
 
 
 def agd(df, x0, eta=0.1, gamma=0.1):
+    """Accelerated gradient descent"""
 
     xk = x0
     vk = 0
@@ -22,6 +27,7 @@ def agd(df, x0, eta=0.1, gamma=0.1):
 
 
 def loop(algorithm, df, x0, maxiter=10000, **kwargs):
+    """Main loop"""
 
     opt = algorithm(df, x0, **kwargs)
 
