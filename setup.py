@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages()
 import descent
 
 setup(name='descent',
@@ -18,7 +18,6 @@ setup(name='descent',
           'Intended Audience :: Science/Research',
           'Operating System :: MacOS :: MacOS X',
           'Topic :: Scientific/Engineering :: Information Analysis'],
-      packages=['descent'],
-      package_dir={'descent': ''},
+      packages=find_packages(),
       license='LICENSE.md'
       )
