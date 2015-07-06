@@ -14,8 +14,10 @@ For more information, see the accompanying README.md
 """
 
 __all__ = [
+    'main',
     'algorithms',
-    'utils'
+    'utils',
+    'callbacks'
     ]
 __version__ = '0.0'
 
