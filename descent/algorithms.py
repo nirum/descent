@@ -1,9 +1,12 @@
 """
 First order gradient descent algorithms
 """
-from toolz.curried import do, map, pipe
+
+from toolz.curried import curry, do, map, pipe
+from descent.utils import wrap
 
 
+@curry
 def gd(df, x0, eta=0.1):
     """Gradient descent"""
 
@@ -13,6 +16,7 @@ def gd(df, x0, eta=0.1):
         yield xk
 
 
+@curry
 def agd(df, x0, eta=0.1, gamma=0.1):
     """Accelerated gradient descent"""
 
@@ -22,12 +26,13 @@ def agd(df, x0, eta=0.1, gamma=0.1):
 
         vnext = xk - eta * df(xk)
         xk = (1-gamma) * vnext + gamma * vk
-        vnext = vk
+        vk = vnext
 
         yield xk
 
 
-def loop(algorithm, df, x0, callbacks=[], maxiter=10000, **kwargs):
+@curry
+def loop(algorithm, f_df, x0, callbacks=[], maxiter=10000):
     """
     Main loop
 
@@ -54,16 +59,20 @@ def loop(algorithm, df, x0, callbacks=[], maxiter=10000, **kwargs):
     maxiter : int
         The maximum number of iterations
 
-    kwargs : dict
-        Optional keyword arguments for the `algorithm` function
-
     """
 
-    opt = algorithm(df, x0, **kwargs)
+    obj, grad = wrap(f_df)
+
+    opt = algorithm(grad, x0)
     funcs = list(map(do, callbacks))
 
     for k in range(int(maxiter)):
+
+        # get the next iterate
         xk = next(opt)
-        pipe(xk, *funcs)
+
+        # get the objective and gradient and pass it to the callbacks
+        data = {'f': obj(xk), 'grad': grad(xk), 'iter': k}
+        pipe(data, *funcs)
 
     return xk

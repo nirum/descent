@@ -1,5 +1,29 @@
 import numpy as np
 from toolz.curried import concat, map, pipe, curry
+from toolz.functoolz import isunary
+from toolz import first, second, compose, take
+from collections import OrderedDict
+
+
+def wrap(f_df, size=1):
+    """
+    Memoizes an objective + gradient function, and splits it into
+    two functions that return just the objective and gradient, respectively.
+
+    Parameters
+    ----------
+    f_df : function
+        Must be unary (takes a single argument)
+
+    size : int, optional
+        Size of the cache (Default=1)
+
+    """
+
+    memoized_f_df = lrucache(f_df, size)
+    objective = compose(first, memoized_f_df)
+    gradient = compose(second, memoized_f_df)
+    return objective, gradient
 
 
 def dict_to_array(d):
@@ -46,3 +70,47 @@ def enforce(typeclass, arg):
     """Asserts that the input is of a given typeclass"""
 
     assert type(arg) == typeclass, "Input must be of " + str(typeclass)
+
+
+def lrucache(fun, size):
+    """
+    A simple implementation of a least recently used (LRU) cache.
+    Memoizes the recent calls of a computationally intensive function.
+
+    Parameters
+    ----------
+    fun : function
+        Must be unary (take a single argument), and that argument must be hashable
+
+    size : int
+        The size of the cache (number of previous calls to store)
+    """
+
+    # this only works for unary functions
+    assert isunary(fun), "The function must be unary (take a single argument)"
+
+    # the cache (storage) and hash function
+    cache = OrderedDict()
+    hashfun = lambda x: hash(x.tostring()) if isinstance(x, object) else hash(x)
+
+    def wrapper(x):
+
+        # hash the argument
+        try:
+            key = hashfun(x)
+        except (AttributeError, TypeError):
+            print('Input must be hashable')
+
+        # if the key is not in the cache, evalute the function
+        if key not in cache:
+
+            # clear space if necessary (keeps the most recent keys)
+            if len(cache) >= size:
+                cache.pop(take(1, cache.iterkeys()).next())
+
+            # store the new value in the cache
+            cache[key] = fun(x)
+
+        return cache[key]
+
+    return wrapper
