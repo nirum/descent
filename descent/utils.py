@@ -114,3 +114,22 @@ def lrucache(fun, size):
         return cache[key]
 
     return wrapper
+
+
+def check_grad(f_df, x0, eps=1e-6, n=50):
+
+    obj, grad = wrap(f_df)
+    df = grad(x0)
+    f0 = obj(x0)
+
+    # check each dimension
+    for j in range(x0.size):
+
+        dx = np.zeros(x0.size)
+        dx[j] = eps
+
+        df_approx = (obj(x0 + dx) - f0) / eps
+        df_analytic = df[j]
+        err = (df_approx-df_analytic)**2
+
+        print('%8.4f\t%8.4f\t%8.4f' % (err, df_approx, df_analytic))
