@@ -3,16 +3,34 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from rosenbrock import f_df
-from descent.algorithms import gd, loop
+from descent.algorithms import gd
+from descent.main import loop
+from descent.utils import wrap
 
 
-def test_rosen():
+def rosenbrock(theta):
+
+    x = theta[0]
+    y = theta[1]
+
+    # Rosenbrock's banana function
+    obj = (1-x)**2 + 100*(y-x**2)**2
+
+    # gradient for the Rosenbrock function
+    grad = np.zeros(2)
+    grad[0] = 2*x - 400*(x*y - x**3) - 2
+    grad[1] = 200*(y-x**2)
+
+    return obj, grad
+
+
+def test_rosen(tol=5e-2):
     """Test rosenbrock"""
 
-    xstar = np.ones(2)
-    tol = 5e-2
+    obj, grad = wrap(rosenbrock)
 
-    xhat = loop(gd(eta=1e-3), f_df, np.zeros(2), maxiter=10000)
+    xstar = np.array([1, 1])
+    assert np.all(grad(xstar) == 0)
 
-    assert np.allclose(xhat, xstar, atol=tol)
+    xhat = loop(gd(eta=1e-3), grad, np.zeros(2), maxiter=10000)
+    assert np.linalg.norm(xhat-xstar) <= tol
