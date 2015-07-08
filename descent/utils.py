@@ -116,11 +116,16 @@ def lrucache(fun, size):
     return wrapper
 
 
-def check_grad(f_df, x0, eps=1e-6, n=50):
+def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
 
     obj, grad = wrap(f_df)
     df = grad(x0)
     f0 = obj(x0)
+
+    # header
+    print("{:^10} {}".format('', "Checking the analytical gradient:"))
+    print("{:^10} {}".format('', "---------------------------------"))
+    print("{:^10} {:<10} | {:<10} | {:<15}".format('', "Numerical", "Analytic", "Error"))
 
     # check each dimension
     for j in range(x0.size):
@@ -132,4 +137,5 @@ def check_grad(f_df, x0, eps=1e-6, n=50):
         df_analytic = df[j]
         err = (df_approx-df_analytic)**2
 
-        print('%8.4f\t%8.4f\t%8.4f' % (err, df_approx, df_analytic))
+        errstr = '********' if err > tol else ''
+        print("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}".format(errstr, df_approx, df_analytic, err))
