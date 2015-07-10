@@ -11,8 +11,7 @@ It also contains a bunch of useful helper files for converting parameter structu
 # Algorithms
 
 ## Implemented
-- Gradient descent `gd`
-- Accelerated Gradient descent `agd`
+- Gradient descent (with momentum) `gdm`
 
 ## Todo
 - Stochastic gradient descent `sgd`
