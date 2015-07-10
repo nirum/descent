@@ -3,6 +3,7 @@ from toolz.curried import concat, map, pipe, curry
 from toolz.functoolz import isunary
 from toolz import first, second, compose, take
 from collections import OrderedDict
+from multipledispatch import dispatch
 
 
 def wrap(f_df, size=1):
@@ -26,35 +27,88 @@ def wrap(f_df, size=1):
     return objective, gradient
 
 
-def dict_to_array(d):
-    """Converts a dictionary whose values are numpy arrays to a single array"""
-    return list_to_array(d.values())
+@dispatch(dict)
+def destruct(x):
+    """
+    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Converts a dictionary whose values are numpy arrays to a single array
+    """
+    return destruct(x.values())
 
 
-def array_to_dict(a, dref):
-    """Converts an unraveled array to a dictionary"""
+@dispatch(tuple)
+def destruct(x):
+    """
+    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Converts a tuple of numpy arrays to a single array
+    """
+    return destruct(list(x))
+
+
+@dispatch(list)
+def destruct(x):
+    """
+    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Converts a list of numpy arrays to a single array
+    """
+
+    # make sure the values are all numpy arrays
+    list(map(enforce(np.ndarray), x))
+
+    # unravel each array, c
+    return pipe(x, map(np.ravel), concat, list, np.array)
+
+
+@dispatch(np.ndarray)
+def destruct(x):
+    """
+    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Converts an N-D numpy array to a 1-D array
+    """
+
+    return x.ravel()
+
+
+@dispatch(np.ndarray, dict)
+def restruct(x, ref):
+    """
+    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Converts an unraveled array to a dictionary
+    """
 
     idx = 0
-    d = dref.copy()
-    for k in dref.keys():
-        d[k] = a[idx:(idx+dref[k].size)].reshape(dref[k].shape)
-        idx += dref[k].size
+    d = ref.copy()
+    for k in ref.keys():
+        d[k] = x[idx:(idx+ref[k].size)].reshape(ref[k].shape)
+        idx += ref[k].size
 
     return d
 
 
-def list_to_array(s):
-    """Converts a sequence of numpy arrays to a single array"""
+@dispatch(np.ndarray, np.ndarray)
+def restruct(x, ref):
+    """
+    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Converts an unraveled array to an N-D array
+    """
+    return x.reshape(ref.shape)
 
-    # make sure the values are all numpy arrays
-    list(map(enforce(np.ndarray), s))
 
-    # unravel each array, c
-    return pipe(s, map(np.ravel), concat, list, np.array)
+@dispatch(np.ndarray, tuple)
+def restruct(x, ref):
+    """
+    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Converts an unraveled array to an tuple
+    """
+    return tuple(restruct(x, list(ref)))
 
 
-def array_to_list(a, sref):
-    """Converts an unraveled array to a list of numpy arrays"""
+@dispatch(np.ndarray, list)
+def restruct(a, sref):
+    """
+    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Converts an unraveled array to a list of numpy arrays
+    """
 
     idx = 0
     s = []
@@ -91,7 +145,7 @@ def lrucache(fun, size):
 
     # the cache (storage) and hash function
     cache = OrderedDict()
-    hashfun = lambda x: hash(x.tostring()) if isinstance(x, object) else hash(x)
+    hashfun = lambda x: hash(x.tostring()) if isinstance(x, np.ndarray) else hash(repr(x))
 
     def wrapper(x):
 
@@ -117,6 +171,17 @@ def lrucache(fun, size):
 
 
 def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
+    """
+    Compares the numerical gradient to the analytic gradient
+
+    Parameters
+    ----------
+    f_df : function
+    x0 : array_like
+    eps : float, optional
+    n : int, optional
+    tol : float, optional
+    """
 
     obj, grad = wrap(f_df)
     df = grad(x0)
