@@ -19,6 +19,5 @@ __all__ = [
     'utils',
     'callbacks'
     ]
-__version__ = '0.0'
 
-from descent import *
+__version__ = '0.0'
