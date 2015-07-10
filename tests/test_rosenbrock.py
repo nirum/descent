@@ -3,12 +3,12 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent.algorithms import gd
+from descent.algorithms import gdm
 from descent.main import loop
-from descent.utils import wrap
 
 
 def rosenbrock(theta):
+    """Objective and gradient for the rosenbrock function"""
 
     x = theta[0]
     y = theta[1]
@@ -24,13 +24,13 @@ def rosenbrock(theta):
     return obj, grad
 
 
-def test_rosen(tol=5e-2):
-    """Test rosenbrock"""
+def test_rosen(tol=5e-3):
+    """Test minimization of the rosenbrock function"""
 
-    obj, grad = wrap(rosenbrock)
-
+    # check that the gradient is zeros at the optimal point
     xstar = np.array([1, 1])
-    assert np.all(grad(xstar) == 0)
+    assert np.all(rosenbrock(xstar)[1] == 0)
 
-    xhat = loop(gd(eta=1e-3), grad, np.zeros(2), maxiter=10000)
+    # run gradient descent with momentum
+    xhat = loop(gdm(eta=1e-3, mu=0.2), rosenbrock, np.zeros(2), maxiter=100000)
     assert np.linalg.norm(xhat-xstar) <= tol
