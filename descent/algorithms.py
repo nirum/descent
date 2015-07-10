@@ -6,25 +6,30 @@ from toolz.curried import curry
 
 
 @curry
-def gd(df, x0, eta=0.1):
-    """Gradient descent"""
+def gdm(df, x0, eta=1e-3, mu=0.0):
+    """
+    Gradient descent with momentum
 
-    xk = x0
-    while True:
-        xk -= eta * df(xk)
-        yield xk
+    Parameters
+    ----------
+    df : function
 
+    x0 : array_like
 
-@curry
-def agd(df, x0, eta=0.1, gamma=0.1):
-    """Accelerated gradient descent"""
+    eta : float, optional
+        Learning rate (Default: 0.01)
 
-    xk = x0
+    mu : float, optional
+        Momentum (Default: 0)
+
+    """
+
+    xk = x0.copy()
     vk = 0
     while True:
 
-        vnext = xk - eta * df(xk)
-        xk = (1-gamma) * vnext + gamma * vk
+        vnext = mu * vk - eta * df(xk)
+        xk += vnext
         vk = vnext
 
         yield xk

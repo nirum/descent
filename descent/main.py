@@ -36,10 +36,13 @@ def loop(algorithm, f_df, x0, callbacks=[], maxiter=10000):
 
     """
 
+    # get functions for the objective and gradient of the function
     obj, grad = wrap(f_df)
 
+    # get the generator for the given algorithm
     opt = algorithm(grad, x0)
 
+    # build the joint callback function
     callback = juxt(*callbacks)
 
     for k in range(int(maxiter)):
