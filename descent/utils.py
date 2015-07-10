@@ -33,7 +33,7 @@ def destruct(x):
     Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
     Converts a dictionary whose values are numpy arrays to a single array
     """
-    return destruct(x.values())
+    return destruct(list(x.values()))
 
 
 @dispatch(tuple)
@@ -78,7 +78,7 @@ def restruct(x, ref):
 
     idx = 0
     d = ref.copy()
-    for k in ref.keys():
+    for k in list(ref.keys()):
         d[k] = x[idx:(idx+ref[k].size)].reshape(ref[k].shape)
         idx += ref[k].size
 
@@ -160,7 +160,7 @@ def lrucache(fun, size):
 
             # clear space if necessary (keeps the most recent keys)
             if len(cache) >= size:
-                cache.pop(take(1, cache.iterkeys()).next())
+                cache.pop(next(take(1, iter(cache.keys()))))
 
             # store the new value in the cache
             cache[key] = fun(x)
@@ -188,9 +188,9 @@ def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
     f0 = obj(x0)
 
     # header
-    print("{:^10} {}".format('', "Checking the analytical gradient:"))
-    print("{:^10} {}".format('', "---------------------------------"))
-    print("{:^10} {:<10} | {:<10} | {:<15}".format('', "Numerical", "Analytic", "Error"))
+    print(("{:^10} {}".format('', "Checking the analytical gradient:")))
+    print(("{:^10} {}".format('', "---------------------------------")))
+    print(("{:^10} {:<10} | {:<10} | {:<15}".format('', "Numerical", "Analytic", "Error")))
 
     # check each dimension
     for j in range(x0.size):
@@ -203,4 +203,4 @@ def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
         err = (df_approx-df_analytic)**2
 
         errstr = '********' if err > tol else ''
-        print("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}".format(errstr, df_approx, df_analytic, err))
+        print(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}".format(errstr, df_approx, df_analytic, err)))

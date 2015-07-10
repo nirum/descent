@@ -53,7 +53,7 @@ def test_restruct():
         'c': np.zeros((3, 2))
     }
     darray = np.array([0, 1, 2, 3, 4, 0, 0.2, 0.4, 0.6, 0.8, 1, 1, 1])
-    for key, val in restruct(darray, dzeros).iteritems():
+    for key, val in list(restruct(darray, dzeros).items()):
         assert np.allclose(dref[key], val), "Dict restruct"
 
     # List

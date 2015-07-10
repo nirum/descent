@@ -8,6 +8,13 @@ It contains routines for running a number of different optimization algorithms, 
 
 It also contains a bunch of useful helper files for converting parameter structures (lists or dictionaries) into arrays and back.
 
+# Requirements
+
+- Python 2.7 or higher
+- [numpy](http://www.numpy.org)
+- [toolz](https://github.com/pytoolz/toolz)
+- [multipledispatch](https://github.com/mrocklin/multipledispatch)
+
 # Algorithms
 
 ## Implemented
