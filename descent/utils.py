@@ -33,7 +33,9 @@ def destruct(x):
     Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
     Converts a dictionary whose values are numpy arrays to a single array
     """
-    return destruct(list(x.values()))
+
+    # take values by sorted keys
+    return destruct([x[k] for k in sorted(x)])
 
 
 @dispatch(tuple)
@@ -78,7 +80,7 @@ def restruct(x, ref):
 
     idx = 0
     d = ref.copy()
-    for k in list(ref.keys()):
+    for k in sorted(ref):
         d[k] = x[idx:(idx+ref[k].size)].reshape(ref[k].shape)
         idx += ref[k].size
 
