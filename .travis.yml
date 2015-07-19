@@ -14,7 +14,7 @@ install:
 
 # command to run tests
 script:
-  py.test --cov descent
+  "python setup.py install && py.test --cov=descent"
 
 after_success:
-  coveralls
+  "coveralls"
