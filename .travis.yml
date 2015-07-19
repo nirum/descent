@@ -7,13 +7,14 @@ python:
 
 # command to install dependencies
 install:
-  - "pip install -r requirements.txt"
-  - "pip install pytest-cov"
-  - "pip install coveralls"
+  - pip install -r requirements.txt --use-mirrors
+  - pip install pytest-cov
+  - pip install coveralls
+  - python setup.py install
 
 # command to run tests
 script:
-  "python setup.py install && py.test --cov=descent tests/"
+  - py.test --cov descent tests/
 
 after_success:
-  "coveralls"
+  - coveralls
