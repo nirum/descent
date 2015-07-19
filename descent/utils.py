@@ -1,7 +1,7 @@
 import numpy as np
 from toolz.curried import concat, map, pipe, curry
 from toolz.functoolz import isunary
-from toolz import first, second, compose, take
+from toolz import first, second, compose
 from collections import OrderedDict
 from multipledispatch import dispatch
 
@@ -30,7 +30,7 @@ def wrap(f_df, size=1):
 @dispatch(dict)
 def destruct(x):
     """
-    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
     Converts a dictionary whose values are numpy arrays to a single array
     """
 
@@ -41,7 +41,7 @@ def destruct(x):
 @dispatch(tuple)
 def destruct(x):
     """
-    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
     Converts a tuple of numpy arrays to a single array
     """
     return destruct(list(x))
@@ -50,7 +50,7 @@ def destruct(x):
 @dispatch(list)
 def destruct(x):
     """
-    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
     Converts a list of numpy arrays to a single array
     """
 
@@ -64,7 +64,7 @@ def destruct(x):
 @dispatch(np.ndarray)
 def destruct(x):
     """
-    Deconstructs a data structure into a 1-D numpy ndarray (using multiple dispatch)
+    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
     Converts an N-D numpy array to a 1-D array
     """
 
@@ -74,7 +74,7 @@ def destruct(x):
 @dispatch(np.ndarray, dict)
 def restruct(x, ref):
     """
-    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
     Converts an unraveled array to a dictionary
     """
 
@@ -90,7 +90,7 @@ def restruct(x, ref):
 @dispatch(np.ndarray, np.ndarray)
 def restruct(x, ref):
     """
-    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
     Converts an unraveled array to an N-D array
     """
     return x.reshape(ref.shape)
@@ -99,7 +99,7 @@ def restruct(x, ref):
 @dispatch(np.ndarray, tuple)
 def restruct(x, ref):
     """
-    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
     Converts an unraveled array to an tuple
     """
     return tuple(restruct(x, list(ref)))
@@ -108,7 +108,7 @@ def restruct(x, ref):
 @dispatch(np.ndarray, list)
 def restruct(a, sref):
     """
-    Reconstructs a data structure from a 1-D numpy ndarray (using multiple dispatch)
+    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
     Converts an unraveled array to a list of numpy arrays
     """
 
@@ -136,7 +136,7 @@ def lrucache(fun, size):
     Parameters
     ----------
     fun : function
-        Must be unary (take a single argument), and that argument must be hashable
+        Must be unary (takes a single argument)
 
     size : int
         The size of the cache (number of previous calls to store)
@@ -145,24 +145,20 @@ def lrucache(fun, size):
     # this only works for unary functions
     assert isunary(fun), "The function must be unary (take a single argument)"
 
-    # the cache (storage) and hash function
+    # initialize the cache
     cache = OrderedDict()
-    hashfun = lambda x: hash(x.tostring()) if isinstance(x, np.ndarray) else hash(repr(x))
 
     def wrapper(x):
 
         # hash the argument
-        try:
-            key = hashfun(x)
-        except (AttributeError, TypeError):
-            print('Input must be hashable')
+        key = hash(repr(x))
 
         # if the key is not in the cache, evalute the function
         if key not in cache:
 
             # clear space if necessary (keeps the most recent keys)
             if len(cache) >= size:
-                cache.pop(next(take(1, iter(cache.keys()))))
+                cache.popitem(last=False)
 
             # store the new value in the cache
             cache[key] = fun(x)
@@ -192,7 +188,8 @@ def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
     # header
     print(("{:^10} {}".format('', "Checking the analytical gradient:")))
     print(("{:^10} {}".format('', "---------------------------------")))
-    print(("{:^10} {:<10} | {:<10} | {:<15}".format('', "Numerical", "Analytic", "Error")))
+    print(("{:^10} {:<10} | {:<10} | {:<15}"
+           .format('', "Numerical", "Analytic", "Error")))
 
     # check each dimension
     for j in range(x0.size):
@@ -205,4 +202,5 @@ def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
         err = (df_approx-df_analytic)**2
 
         errstr = '********' if err > tol else ''
-        print(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}".format(errstr, df_approx, df_analytic, err)))
+        print(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}"
+               .format(errstr, df_approx, df_analytic, err)))

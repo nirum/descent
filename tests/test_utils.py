@@ -4,8 +4,7 @@ Test conversion utilities
 
 import numpy as np
 from descent.utils import destruct, restruct, lrucache
-from nose.tools import timed
-from time import sleep
+from time import sleep, time
 
 
 def test_destruct():
@@ -68,7 +67,6 @@ def test_restruct():
         assert np.allclose(lref[idx], val), "Tuple restruct"
 
 
-@timed(1.1)
 def test_lrucache():
     """Tests the lrucache decorator"""
 
@@ -81,10 +79,18 @@ def test_lrucache():
     cachedfunc = lrucache(slowfunc, 1)
 
     # first call will be slow (1 second)
+    start = time()
     y1 = cachedfunc(2)
+    call1 = time() - start
 
     # second call should be fast (dictionary lookup)
+    start = time()
     y2 = cachedfunc(2)
+    call2 = time() - start
+
+    # assert timing results
+    assert call1 >= 1.0, "First call takes at least a second"
+    assert call2 <= 1e-3, "Second call is just a dictionary lookup"
 
     # and both results should be the same
     assert y1 == y2, "Cached return values must match"

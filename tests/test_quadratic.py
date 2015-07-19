@@ -16,5 +16,5 @@ def test_fixedpoint():
 
     xstar = np.array([0, 0])
     obj, grad = wrap(f_df)
-    opt = gdm(grad, xstar)
+    opt = gdm(grad, xstar, 10)
     assert np.allclose(next(opt), xstar)

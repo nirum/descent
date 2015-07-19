@@ -24,7 +24,7 @@ def rosenbrock(theta):
     return obj, grad
 
 
-def test_rosen(tol=5e-3):
+def test_rosen(tol=1e-2):
     """Test minimization of the rosenbrock function"""
 
     # check that the gradient is zeros at the optimal point
@@ -32,5 +32,5 @@ def test_rosen(tol=5e-3):
     assert np.all(rosenbrock(xstar)[1] == 0)
 
     # run gradient descent with momentum
-    xhat = loop(gdm(eta=1e-3, mu=0.2), rosenbrock, np.zeros(2), maxiter=100000)
+    xhat = loop(gdm(eta=1e-3, mu=0.2), rosenbrock, np.zeros(2), maxiter=10000)
     assert np.linalg.norm(xhat-xstar) <= tol
