@@ -27,6 +27,87 @@ def wrap(f_df, size=1):
     return objective, gradient
 
 
+def lrucache(fun, size):
+    """
+    A simple implementation of a least recently used (LRU) cache.
+    Memoizes the recent calls of a computationally intensive function.
+
+    Parameters
+    ----------
+    fun : function
+        Must be unary (takes a single argument)
+
+    size : int
+        The size of the cache (number of previous calls to store)
+    """
+
+    # this only works for unary functions
+    assert isunary(fun), "The function must be unary (take a single argument)"
+
+    # initialize the cache
+    cache = OrderedDict()
+
+    def wrapper(x):
+
+        # hash the input, using tostring for small and repr for large arrays
+        if x.size <= 1e4:
+            key = hash(x.tostring())
+        else:
+            key = hash(repr(x))
+
+        # if the key is not in the cache, evalute the function
+        if key not in cache:
+
+            # clear space if necessary (keeps the most recent keys)
+            if len(cache) >= size:
+                cache.popitem(last=False)
+
+            # store the new value in the cache
+            cache[key] = fun(x)
+
+        return cache[key]
+
+    return wrapper
+
+
+def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
+    """
+    Compares the numerical gradient to the analytic gradient
+
+    Parameters
+    ----------
+    f_df : function
+    x0 : array_like
+    eps : float, optional
+    n : int, optional
+    tol : float, optional
+    """
+
+    obj, grad = wrap(f_df)
+    df = grad(x0)
+    f0 = obj(x0)
+
+    # header
+    print(("{:^10} {}".format('', "Checking the analytical gradient:")))
+    print(("{:^10} {}".format('', "---------------------------------")))
+    print(("{:^10} {:<10} | {:<10} | {:<15}"
+           .format('', "Numerical", "Analytic", "Error")))
+
+    # check each dimension
+    for j in range(x0.size):
+
+        dx = np.zeros(x0.size)
+        dx[j] = eps
+
+        df_approx = (obj(x0 + dx) - f0) / eps
+        df_analytic = df[j]
+        err = (df_approx-df_analytic)**2
+
+        errstr = '********' if err > tol else ''
+        print(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}"
+               .format(errstr, df_approx, df_analytic, err)))
+
+
 @dispatch(dict)
 def destruct(x):
     """
@@ -126,81 +207,3 @@ def enforce(typeclass, arg):
     """Asserts that the input is of a given typeclass"""
 
     assert type(arg) == typeclass, "Input must be of " + str(typeclass)
-
-
-def lrucache(fun, size):
-    """
-    A simple implementation of a least recently used (LRU) cache.
-    Memoizes the recent calls of a computationally intensive function.
-
-    Parameters
-    ----------
-    fun : function
-        Must be unary (takes a single argument)
-
-    size : int
-        The size of the cache (number of previous calls to store)
-    """
-
-    # this only works for unary functions
-    assert isunary(fun), "The function must be unary (take a single argument)"
-
-    # initialize the cache
-    cache = OrderedDict()
-
-    def wrapper(x):
-
-        # hash the argument
-        key = hash(repr(x))
-
-        # if the key is not in the cache, evalute the function
-        if key not in cache:
-
-            # clear space if necessary (keeps the most recent keys)
-            if len(cache) >= size:
-                cache.popitem(last=False)
-
-            # store the new value in the cache
-            cache[key] = fun(x)
-
-        return cache[key]
-
-    return wrapper
-
-
-def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
-    """
-    Compares the numerical gradient to the analytic gradient
-
-    Parameters
-    ----------
-    f_df : function
-    x0 : array_like
-    eps : float, optional
-    n : int, optional
-    tol : float, optional
-    """
-
-    obj, grad = wrap(f_df)
-    df = grad(x0)
-    f0 = obj(x0)
-
-    # header
-    print(("{:^10} {}".format('', "Checking the analytical gradient:")))
-    print(("{:^10} {}".format('', "---------------------------------")))
-    print(("{:^10} {:<10} | {:<10} | {:<15}"
-           .format('', "Numerical", "Analytic", "Error")))
-
-    # check each dimension
-    for j in range(x0.size):
-
-        dx = np.zeros(x0.size)
-        dx[j] = eps
-
-        df_approx = (obj(x0 + dx) - f0) / eps
-        df_analytic = df[j]
-        err = (df_approx-df_analytic)**2
-
-        errstr = '********' if err > tol else ''
-        print(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}"
-               .format(errstr, df_approx, df_analytic, err)))
