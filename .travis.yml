@@ -8,13 +8,12 @@ python:
 # command to install dependencies
 install:
   - pip install -r requirements.txt --use-mirrors
-  - pip install pytest-cov
   - pip install coveralls
 
 # command to run tests
 script:
   - python setup.py install
-  - py.test --cov=descent tests/
+  - nosetests --with-coverage --cover-package=descent
 
 after_success:
   - coveralls
