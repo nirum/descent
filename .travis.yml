@@ -13,7 +13,7 @@ install:
 
 # command to run tests
 script:
-  nosetests --with-coverage --cover-package=descent
+  py.test --cov descent tests/
 
 after_success:
   coveralls
