@@ -3,7 +3,7 @@ Main routines for the descent package
 """
 
 from toolz.curried import curry, juxt
-from descent.utils import wrap
+from descent.utils import wrap, destruct, restruct
 
 
 @curry
@@ -36,15 +36,20 @@ def loop(algorithm, f_df, x0, callbacks=[], maxiter=1000):
 
     """
 
+    # destruct the input into a numpy array
+    x_init = destruct(x0)
+
     # get functions for the objective and gradient of the function
     obj, grad = wrap(f_df)
 
     # build the joint callback function
     callback = juxt(*callbacks)
 
-    for k, xk in enumerate(algorithm(grad, x0, maxiter)):
+    # run the optimizer
+    for k, xk in enumerate(algorithm(grad, x_init, maxiter)):
 
         # get the objective and gradient and pass it to the callbacks
         callback({'obj': obj(xk), 'grad': grad(xk), 'params': xk, 'iter': k})
 
-    return xk
+    # return the final parameters, reshaped in the original format
+    return restruct(xk, x0)
