@@ -3,6 +3,7 @@
 **Descent is just getting started and is under active development. Please check back soon for more updates!**
 
 [![Build Status](https://travis-ci.org/nirum/descent.svg?branch=master)](https://travis-ci.org/nirum/descent)
+[![Coverage Status](https://coveralls.io/repos/nirum/descent/badge.svg?branch=master&service=github)](https://coveralls.io/github/nirum/descent?branch=master)
 
 Descent is a package for performing first-order optimization. It is just getting of the ground, check back soon for more updates.
 
