@@ -7,9 +7,9 @@ from descent.utils import wrap, destruct, restruct
 
 
 @curry
-def loop(algorithm, f_df, x0, callbacks=[], maxiter=1000):
+def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3):
     """
-    Main loop
+    Main optimization loop
 
     Parameters
     ----------

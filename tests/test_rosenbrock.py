@@ -3,8 +3,8 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent.algorithms import gdm
-from descent.main import loop
+from descent.algorithms import gdm, rmsprop
+from descent.main import optimize
 
 
 def rosenbrock(theta):
@@ -31,6 +31,13 @@ def test_rosen(tol=1e-2):
     xstar = np.array([1, 1])
     assert np.all(rosenbrock(xstar)[1] == 0)
 
-    # run gradient descent with momentum
-    xhat = loop(gdm(eta=1e-3, mu=0.2), rosenbrock, np.zeros(2), maxiter=10000)
-    assert np.linalg.norm(xhat-xstar) <= tol
+    # list of algorithms to test (and their parameters)
+    algorithms = [gdm(lr=1e-3, momentum=0.2),
+                  rmsprop(lr=1e-3)]
+
+    # loop over algorithms
+    for alg in algorithms:
+
+        # run the optimization algorithm
+        xhat = optimize(alg, rosenbrock, np.zeros(2), maxiter=1e4)
+        assert np.linalg.norm(xhat-xstar) <= tol
