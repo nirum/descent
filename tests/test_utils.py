@@ -80,12 +80,12 @@ def test_lrucache():
 
     # first call will be slow (1 second)
     start = time()
-    y1 = cachedfunc(2)
+    y1 = cachedfunc(np.array(2))
     call1 = time() - start
 
     # second call should be fast (dictionary lookup)
     start = time()
-    y2 = cachedfunc(2)
+    y2 = cachedfunc(np.array(2))
     call2 = time() - start
 
     # assert timing results
