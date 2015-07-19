@@ -14,7 +14,7 @@ install:
 
 # command to run tests
 script:
-  py.test --cov descent tests/
+  py.test --cov descent
 
 after_success:
   coveralls
