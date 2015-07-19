@@ -4,7 +4,6 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-  - "nightly"
 
 # command to install dependencies
 install:
@@ -14,7 +13,7 @@ install:
 
 # command to run tests
 script:
-  "python setup.py install && py.test --cov=descent"
+  "python setup.py install && py.test --cov=descent tests/"
 
 after_success:
   "coveralls"
