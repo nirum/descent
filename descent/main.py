@@ -3,11 +3,11 @@ Main routines for the descent package
 """
 
 from toolz.curried import curry, juxt
-from .utils import wrap
+from .utils import wrap, destruct, restruct
 
 
 @curry
-def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3, minibatches=[]):
+def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3, minibatches=[]):
     """
     Main optimization loop
 
@@ -51,7 +51,8 @@ def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3, minibatches=[]):
             "Full batch algorithm must be one of: " + ", ".join(valid)
 
     # get functions for the objective and gradient of the function
-    obj, grad = wrap(f_df)
+    obj, grad = wrap(f_df, xref)
+    x0 = destruct(xref)
 
     # build the joint callback function
     callback = juxt(*callbacks)
@@ -60,7 +61,10 @@ def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3, minibatches=[]):
     for k, xk in enumerate(algorithm(grad, x0, maxiter)):
 
         # get the objective and gradient and pass it to the callbacks
-        callback({'obj': obj(xk), 'grad': grad(xk), 'params': xk, 'iter': k})
+        callback({'obj': obj(xk),
+                  'grad': restruct(grad(xk), xref),
+                  'params': restruct(xk, xref),
+                  'iter': k})
 
     # return the final parameters, reshaped in the original format
-    return xk
+    return restruct(xk, xref)

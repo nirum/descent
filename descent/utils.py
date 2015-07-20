@@ -6,7 +6,7 @@ from collections import OrderedDict
 from multipledispatch import dispatch
 
 
-def wrap(f_df, size=1):
+def wrap(f_df, xref, size=1):
     """
     Memoizes an objective + gradient function, and splits it into
     two functions that return just the objective and gradient, respectively.
@@ -21,9 +21,9 @@ def wrap(f_df, size=1):
 
     """
 
-    memoized_f_df = lrucache(f_df, size)
-    objective = compose(first, memoized_f_df, destruct)
-    gradient = compose(second, memoized_f_df, destruct)
+    memoized_f_df = lrucache(lambda x: f_df(restruct(x, xref)), size)
+    objective = compose(first, memoized_f_df)
+    gradient = compose(destruct, second, memoized_f_df)
     return objective, gradient
 
 
@@ -70,7 +70,7 @@ def lrucache(fun, size):
     return wrapper
 
 
-def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
+def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4):
     """
     Compares the numerical gradient to the analytic gradient
 
@@ -83,9 +83,8 @@ def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
     tol : float, optional
     """
 
-    xarray = destruct(x0).copy
-
-    obj, grad = wrap(f_df)
+    obj, grad = wrap(f_df, xref)
+    x0 = destruct(xref)
     df = grad(x0)
     f0 = obj(x0)
 
