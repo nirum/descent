@@ -3,6 +3,7 @@ First order gradient descent algorithms
 """
 
 from toolz.curried import curry
+from .utils import destruct, restruct
 import numpy as np
 
 
@@ -29,7 +30,7 @@ def gdm(df, x0, maxiter, lr=1e-2, momentum=0., decay=0.):
     """
 
     # initialize parameters and velocity
-    xk = x0.copy()
+    xk = destruct(x0).copy()
     vk = np.zeros_like(xk)
 
     for k in range(int(maxiter)):
@@ -38,7 +39,7 @@ def gdm(df, x0, maxiter, lr=1e-2, momentum=0., decay=0.):
         xk += vnext
         vk = vnext
 
-        yield xk
+        yield restruct(xk, x0)
 
 
 @curry
@@ -64,7 +65,7 @@ def rmsprop(df, x0, maxiter, lr=1e-2, damping=0.1, decay=0.9):
     """
 
     # initialize parameters and velocity
-    xk = x0.copy()
+    xk = destruct(x0).copy()
     rms = np.zeros_like(xk)
 
     for k in range(int(maxiter)):
@@ -77,4 +78,4 @@ def rmsprop(df, x0, maxiter, lr=1e-2, damping=0.1, decay=0.9):
         # gradient descent update
         xk -= lr * grad / (damping + np.sqrt(rms))
 
-        yield xk
+        yield restruct(xk, x0)

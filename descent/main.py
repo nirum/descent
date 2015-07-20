@@ -3,11 +3,11 @@ Main routines for the descent package
 """
 
 from toolz.curried import curry, juxt
-from descent.utils import wrap, destruct, restruct
+from .utils import wrap
 
 
 @curry
-def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3):
+def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3, minibatches=[]):
     """
     Main optimization loop
 
@@ -18,26 +18,37 @@ def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3):
         in a descent sequence (for example, any of the other functions
         in this module)
 
-    df : function
+    f_df : function
         A function which takes one parameter (a numpy.ndarray of parameters)
-        and returns the gradient of the objective at that location
+        and returns the objective and gradient at that location
 
     x0 : array_like
         A numpy array consisting of the initial parameters
 
-    callbacks : [function]
+    callbacks : list, optional
         A list of functions, each which takes one parameter (a dictionary
         containing metadata). These functions should have side effects, for
-        example, they can log the parameters or compute the error in the
-        objective and store it somewhere. Called at each iteration.
+        example, they can log the parameters or update a plot with the current
+        objective value. Called at each iteration.
 
-    maxiter : int
-        The maximum number of iterations
+    maxiter : int, optional
+        The maximum number of iterations (Default: 1000)
+
+    minibatches : list, optional
+        Used for minibatch optimization. An optional list of data (req)
 
     """
 
-    # destruct the input into a numpy array
-    x_init = destruct(x0)
+    # make sure the algorithm is valid
+    if minibatches:
+        valid = ['sag', 'adam', 'adagrad']
+        assert algorithm.func_name in valid, \
+            "Minibatch algorithm must be one of: " + ", ".join(valid)
+
+    else:
+        valid = ['gdm', 'rmsprop']
+        assert algorithm.func_name in valid, \
+            "Full batch algorithm must be one of: " + ", ".join(valid)
 
     # get functions for the objective and gradient of the function
     obj, grad = wrap(f_df)
@@ -46,10 +57,10 @@ def optimize(algorithm, f_df, x0, callbacks=[], maxiter=1e3):
     callback = juxt(*callbacks)
 
     # run the optimizer
-    for k, xk in enumerate(algorithm(grad, x_init, maxiter)):
+    for k, xk in enumerate(algorithm(grad, x0, maxiter)):
 
         # get the objective and gradient and pass it to the callbacks
         callback({'obj': obj(xk), 'grad': grad(xk), 'params': xk, 'iter': k})
 
     # return the final parameters, reshaped in the original format
-    return restruct(xk, x0)
+    return xk

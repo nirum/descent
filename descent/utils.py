@@ -22,8 +22,8 @@ def wrap(f_df, size=1):
     """
 
     memoized_f_df = lrucache(f_df, size)
-    objective = compose(first, memoized_f_df)
-    gradient = compose(second, memoized_f_df)
+    objective = compose(first, memoized_f_df, destruct)
+    gradient = compose(second, memoized_f_df, destruct)
     return objective, gradient
 
 
@@ -82,6 +82,8 @@ def check_grad(f_df, x0, eps=1e-6, n=50, tol=1e-4):
     n : int, optional
     tol : float, optional
     """
+
+    xarray = destruct(x0).copy
 
     obj, grad = wrap(f_df)
     df = grad(x0)
@@ -187,7 +189,7 @@ def restruct(x, ref):
 
 
 @dispatch(np.ndarray, list)
-def restruct(a, sref):
+def restruct(x, ref):
     """
     Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
     Converts an unraveled array to a list of numpy arrays
@@ -195,8 +197,8 @@ def restruct(a, sref):
 
     idx = 0
     s = []
-    for si in sref:
-        s.append(a[idx:(idx+si.size)].reshape(si.shape))
+    for si in ref:
+        s.append(x[idx:(idx+si.size)].reshape(si.shape))
         idx += si.size
 
     return s
