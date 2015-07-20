@@ -3,8 +3,64 @@ Test conversion utilities
 """
 
 import numpy as np
-from descent.utils import destruct, restruct, lrucache
+from descent.utils import destruct, restruct, lrucache, check_grad
+from six import StringIO
 from time import sleep, time
+
+
+def test_lrucache():
+    """Tests the lrucache decorator"""
+
+    def slowfunc(x):
+        """A fake slow function (for testing lrucache)"""
+        sleep(1)
+        return x**2
+
+    # cached function memoizes the last call
+    cachedfunc = lrucache(slowfunc, 1)
+
+    # first call will be slow (1 second)
+    start = time()
+    y1 = cachedfunc(np.array(2))
+    call1 = time() - start
+
+    # second call should be fast (dictionary lookup)
+    start = time()
+    y2 = cachedfunc(np.array(2))
+    call2 = time() - start
+
+    # assert timing results
+    assert call1 >= 1.0, "First call takes at least a second"
+    assert call2 <= 1e-3, "Second call is just a dictionary lookup"
+
+    # and both results should be the same
+    assert y1 == y2, "Cached return values must match"
+
+
+def test_check_grad():
+    """Tests the check_grad() function"""
+
+    def f_df_correct(x):
+        return x**2, 2*x
+
+    def f_df_incorrect(x):
+        return x**3, 0.5*x**2
+
+    output = StringIO()
+    check_grad(f_df_correct, 5, out=output)
+
+    # get the first row of data
+    rows = output.getvalue().split('\n')
+    values = [float(s.strip()) for s in rows[3].strip().split('|')]
+    assert values[0] == values[1] == 10.0, "Correct gradient computation"
+    assert values[2] == 0.0, "Correct error computation"
+
+    output = StringIO()
+    check_grad(f_df_incorrect, 5, out=output)
+    rows = output.getvalue().split('\n')
+    error = float(rows[3].split('|')[-1])
+    assert round(error) == 3906, "Correct error computation"
+    assert rows[3].find('******') >= 0, "Displays stars on error"
 
 
 def test_destruct():
@@ -30,6 +86,10 @@ def test_destruct():
 
     # Tuple
     assert np.allclose(larray, destruct(tuple(lref))), "Tuple destruct"
+
+    # Numeric
+    assert np.array(2.0) == destruct(2), "Integer destruct"
+    assert np.array(-5.0) == destruct(-5.0), "Float destruct"
 
 
 def test_restruct():
@@ -66,31 +126,6 @@ def test_restruct():
     for idx, val in enumerate(restruct(larray, tuple(lzeros))):
         assert np.allclose(lref[idx], val), "Tuple restruct"
 
-
-def test_lrucache():
-    """Tests the lrucache decorator"""
-
-    def slowfunc(x):
-        """A fake slow function (for testing lrucache)"""
-        sleep(1)
-        return x**2
-
-    # cached function memoizes the last call
-    cachedfunc = lrucache(slowfunc, 1)
-
-    # first call will be slow (1 second)
-    start = time()
-    y1 = cachedfunc(np.array(2))
-    call1 = time() - start
-
-    # second call should be fast (dictionary lookup)
-    start = time()
-    y2 = cachedfunc(np.array(2))
-    call2 = time() - start
-
-    # assert timing results
-    assert call1 >= 1.0, "First call takes at least a second"
-    assert call2 <= 1e-3, "Second call is just a dictionary lookup"
-
-    # and both results should be the same
-    assert y1 == y2, "Cached return values must match"
+    # Numeric
+    assert restruct(np.array(2.0), 0) == 2.0, "Integer restruct"
+    assert restruct(np.array(-5.0), 0.0) == -5.0, "Float restruct"

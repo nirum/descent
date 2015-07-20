@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from toolz.curried import concat, map, pipe, curry
 from toolz.functoolz import isunary
@@ -70,7 +71,7 @@ def lrucache(fun, size):
     return wrapper
 
 
-def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4):
+def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4, out=sys.stdout):
     """
     Compares the numerical gradient to the analytic gradient
 
@@ -89,10 +90,11 @@ def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4):
     f0 = obj(x0)
 
     # header
-    print(("{:^10} {}".format('', "Checking the analytical gradient:")))
-    print(("{:^10} {}".format('', "---------------------------------")))
-    print(("{:^10} {:<10} | {:<10} | {:<15}"
-           .format('', "Numerical", "Analytic", "Error")))
+    out.write(("{:^10} {}".format('', "Checking the analytical gradient:\n")))
+    out.write(("{:^10} {}".format('', "---------------------------------\n")))
+    out.write(("{:^10} {:<10} | {:<10} | {:<15}"
+               .format('', "Numerical", "Analytic", "Error")))
+    out.write("\n")
 
     # check each dimension
     for j in range(x0.size):
@@ -105,8 +107,20 @@ def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4):
         err = (df_approx-df_analytic)**2
 
         errstr = '********' if err > tol else ''
-        print(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}"
-               .format(errstr, df_approx, df_analytic, err)))
+        out.write(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}\n"
+                   .format(errstr, df_approx, df_analytic, err)))
+
+
+@dispatch(int)
+def destruct(x):
+    """Convert an int to a numpy array"""
+    return destruct(float(x))
+
+
+@dispatch(float)
+def destruct(x):
+    """Convert a float to a numpy array"""
+    return np.array([x])
 
 
 @dispatch(dict)
@@ -151,6 +165,16 @@ def destruct(x):
     """
 
     return x.ravel()
+
+
+@dispatch(np.ndarray, int)
+def restruct(x, ref):
+    return float(x)
+
+
+@dispatch(np.ndarray, float)
+def restruct(x, ref):
+    return float(x)
 
 
 @dispatch(np.ndarray, dict)
