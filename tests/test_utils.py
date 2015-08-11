@@ -51,15 +51,18 @@ def test_check_grad():
 
     # get the first row of data
     rows = output.getvalue().split('\n')
-    values = [float(s.strip()) for s in rows[3].strip().split('|')]
+    values = [float(s.strip(' *')) for s in rows[3].strip().split('|')]
     assert values[0] == values[1] == 10.0, "Correct gradient computation"
     assert values[2] == 0.0, "Correct error computation"
 
     output = StringIO()
     check_grad(f_df_incorrect, 5, out=output)
     rows = output.getvalue().split('\n')
-    error = float(rows[3].split('|')[-1])
-    assert round(error) == 3906, "Correct error computation"
+    values = [float(s.strip(' *')) for s in rows[3].strip().split('|')]
+    printed_error = float(rows[3].split('|')[-1])
+    correct_error = np.abs(values[0] - values[1]) \
+                    / (np.abs(values[0]) + np.abs(values[1]))
+    assert np.isclose(printed_error, correct_error), "Correct relative error"
     assert rows[3].find('******') >= 0, "Displays stars on error"
 
 

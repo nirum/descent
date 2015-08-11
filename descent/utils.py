@@ -71,7 +71,7 @@ def lrucache(fun, size):
     return wrapper
 
 
-def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4, out=sys.stdout):
+def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-4, out=sys.stdout):
     """
     Compares the numerical gradient to the analytic gradient
 
@@ -79,7 +79,7 @@ def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4, out=sys.stdout):
     ----------
     f_df : function
     x0 : array_like
-    eps : float, optional
+    stepsize : float, optional
     n : int, optional
     tol : float, optional
     """
@@ -87,7 +87,6 @@ def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4, out=sys.stdout):
     obj, grad = wrap(f_df, xref)
     x0 = destruct(xref)
     df = grad(x0)
-    f0 = obj(x0)
 
     # header
     out.write(("{:^10} {}".format('', "Checking the analytical gradient:\n")))
@@ -99,16 +98,22 @@ def check_grad(f_df, xref, eps=1e-6, n=50, tol=1e-4, out=sys.stdout):
     # check each dimension
     for j in range(x0.size):
 
+        # take a small step in one dimension
         dx = np.zeros(x0.size)
-        dx[j] = eps
+        dx[j] = stepsize
 
-        df_approx = (obj(x0 + dx) - f0) / eps
+        # compute the centered difference formula
+        df_approx = (obj(x0 + dx) - obj(x0 - dx)) / (2 * stepsize)
         df_analytic = df[j]
-        err = (df_approx-df_analytic)**2
 
-        errstr = '********' if err > tol else ''
+        # relative error
+        normsum = np.linalg.norm(df_approx) + np.linalg.norm(df_analytic)
+        error = np.linalg.norm(df_approx - df_analytic) / normsum \
+            if normsum > 0 else 0
+
+        errstr = '********' if error > tol else ''
         out.write(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}\n"
-                   .format(errstr, df_approx, df_analytic, err)))
+                   .format(errstr, df_approx, df_analytic, error)))
 
 
 @dispatch(int)
