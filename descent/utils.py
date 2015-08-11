@@ -71,7 +71,7 @@ def lrucache(fun, size):
     return wrapper
 
 
-def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-4, out=sys.stdout):
+def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
     """
     Compares the numerical gradient to the analytic gradient
 
