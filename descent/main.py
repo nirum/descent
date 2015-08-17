@@ -5,6 +5,8 @@ Main routines for the descent package
 from toolz.curried import curry, juxt
 from .utils import wrap, destruct, restruct
 
+__all__ = ['optimize']
+
 
 @curry
 def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3, minibatches=[]):

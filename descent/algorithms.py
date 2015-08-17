@@ -5,6 +5,8 @@ First order gradient descent algorithms
 from toolz.curried import curry
 import numpy as np
 
+__all__ = ['gdm', 'rmsprop']
+
 
 @curry
 def gdm(df, x0, maxiter, lr=1e-2, momentum=0., decay=0.):

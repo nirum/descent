@@ -20,4 +20,9 @@ __all__ = [
     'callbacks'
     ]
 
+from .algorithms import *
+from .main import *
+from .callbacks import *
+from .utils import *
+
 __version__ = '0.0'
