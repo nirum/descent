@@ -6,6 +6,8 @@ from toolz import first, second, compose
 from collections import OrderedDict
 from multipledispatch import dispatch
 
+__all__ = ['check_grad', 'destruct', 'restruct']
+
 
 def wrap(f_df, xref, size=1):
     """
@@ -84,16 +86,20 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
     tol : float, optional
     """
 
+    CORRECT = u'\x1b[32m\N{HEAVY CHECK MARK}\x1b[0m'
+    INCORRECT = u'\x1b[31m\N{BALLOT X}\x1b[0m'
+
     obj, grad = wrap(f_df, xref)
     x0 = destruct(xref)
     df = grad(x0)
 
     # header
-    out.write(("{:^10} {}".format('', "Checking the analytical gradient:\n")))
-    out.write(("{:^10} {}".format('', "---------------------------------\n")))
-    out.write(("{:^10} {:<10} | {:<10} | {:<15}"
-               .format('', "Numerical", "Analytic", "Error")))
-    out.write("\n")
+    out.write(("{}".format('', "Checking the analytical gradient:\n")))
+    out.write(("{}".format("------------------------------------\n")))
+    out.write(("{:<10} | {:<10} | {:<15}\n"
+               .format("Numerical", "Analytic", "Error")))
+    out.write(("{}".format("------------------------------------\n")))
+    out.flush()
 
     # check each dimension
     for j in range(x0.size):
@@ -111,9 +117,10 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         error = np.linalg.norm(df_approx - df_analytic) / normsum \
             if normsum > 0 else 0
 
-        errstr = '********' if error > tol else ''
-        out.write(("{:^10} {:<10.4f} | {:<10.4f} | {:<15.6f}\n"
-                   .format(errstr, df_approx, df_analytic, error)))
+        errstr =  CORRECT if error < tol else INCORRECT
+        out.write(("{:<10.4f} | {:<10.4f} | {:<5.6f} | {:^2}\n"
+                   .format(df_approx, df_analytic, error, errstr)))
+        out.flush()
 
 
 @dispatch(int)
@@ -235,5 +242,4 @@ def restruct(x, ref):
 @curry
 def enforce(typeclass, arg):
     """Asserts that the input is of a given typeclass"""
-
     assert type(arg) == typeclass, "Input must be of " + str(typeclass)

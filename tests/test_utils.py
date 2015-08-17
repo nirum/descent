@@ -49,21 +49,22 @@ def test_check_grad():
     output = StringIO()
     check_grad(f_df_correct, 5, out=output)
 
+    # helper functions
+    getvalues = lambda o: [float(s.strip()) for s in \
+                           o.getvalue().split('\n')[3].split('|')[:-1]]
+
     # get the first row of data
-    rows = output.getvalue().split('\n')
-    values = [float(s.strip(' *')) for s in rows[3].strip().split('|')]
+    values = getvalues(output)
     assert values[0] == values[1] == 10.0, "Correct gradient computation"
     assert values[2] == 0.0, "Correct error computation"
 
     output = StringIO()
     check_grad(f_df_incorrect, 5, out=output)
-    rows = output.getvalue().split('\n')
-    values = [float(s.strip(' *')) for s in rows[3].strip().split('|')]
-    printed_error = float(rows[3].split('|')[-1])
+    values = getvalues(output)
+    printed_error = values[2]
     correct_error = np.abs(values[0] - values[1]) \
                     / (np.abs(values[0]) + np.abs(values[1]))
     assert np.isclose(printed_error, correct_error), "Correct relative error"
-    assert rows[3].find('******') >= 0, "Displays stars on error"
 
 
 def test_destruct():
