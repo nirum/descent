@@ -86,8 +86,12 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
     tol : float, optional
     """
 
-    CORRECT = u'\x1b[32m\N{HEAVY CHECK MARK}\x1b[0m'
-    INCORRECT = u'\x1b[31m\N{BALLOT X}\x1b[0m'
+    if sys.version_info >= (3,0):
+        CORRECT = u'\x1b[32m\N{HEAVY CHECK MARK}\x1b[0m'
+        INCORRECT = u'\x1b[31m\N{BALLOT X}\x1b[0m'
+    else:
+        CORRECT = u'\x1b[32mPass\x1b[0m'
+        INCORRECT = u'\x1b[31mFail\x1b[0m'
 
     obj, grad = wrap(f_df, xref)
     x0 = destruct(xref)
