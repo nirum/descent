@@ -80,3 +80,41 @@ def rmsprop(df, x0, maxiter, lr=1e-2, damping=0.1, decay=0.9):
         xk -= lr * grad / (damping + np.sqrt(rms))
 
         yield xk
+
+
+@curry
+def sag(df, x0, maxiter, nterms, lr=1e-2):
+    """
+    Stochastic Average Gradient (SAG)
+
+    Parameters
+    ----------
+    df : function
+
+    x0 : array_like
+
+    maxiter : int
+
+    lr : float, optional
+
+    """
+
+    # initialize gradients
+    gradients = [df(x0, j) for j in range(nterms)]
+
+    # initialize parameters
+    xk = x0.copy()
+
+    for k in range(int(maxiter)):
+
+        # choose a random subfunction to update
+        idx = np.random.randint(nterms)
+        gradients[idx] = df(xk, idx)
+
+        # compute the average gradient
+        grad = np.mean(gradients, axis=0)
+
+        # update
+        xk -= lr * grad
+
+        yield xk

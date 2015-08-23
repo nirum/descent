@@ -4,12 +4,13 @@ Main routines for the descent package
 
 from toolz.curried import curry, juxt
 from .utils import wrap, destruct, restruct
+from .callbacks import datum
 
 __all__ = ['optimize']
 
 
 @curry
-def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3, minibatches=[]):
+def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3):
     """
     Main optimization loop
 
@@ -42,15 +43,9 @@ def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3, minibatches=[]):
     """
 
     # make sure the algorithm is valid
-    if minibatches:
-        valid = ['sag', 'adam', 'adagrad']
-        assert algorithm.func_name in valid, \
-            "Minibatch algorithm must be one of: " + ", ".join(valid)
-
-    else:
-        valid = ['gdm', 'rmsprop']
-        assert algorithm.func_name in valid, \
-            "Full batch algorithm must be one of: " + ", ".join(valid)
+    valid = ['gdm', 'rmsprop']
+    assert algorithm.func_name in valid, \
+        "Full batch algorithm must be one of: " + ", ".join(valid)
 
     # get functions for the objective and gradient of the function
     obj, grad = wrap(f_df, xref)
@@ -63,10 +58,10 @@ def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3, minibatches=[]):
     for k, xk in enumerate(algorithm(grad, x0, maxiter)):
 
         # get the objective and gradient and pass it to the callbacks
-        callback({'obj': obj(xk),
-                  'grad': restruct(grad(xk), xref),
-                  'params': restruct(xk, xref),
-                  'iter': k})
+        callback(datum(obj=obj(xk),
+                       grad=restruct(grad(xk), xref),
+                       params=restruct(xk, xref),
+                       iteration=k))
 
     # return the final parameters, reshaped in the original format
     return restruct(xk, xref)
