@@ -25,7 +25,7 @@ def disp(d, every=1):
 
     if d.iteration % every == 0:
         print(tp.row([d.iteration, d.obj,
-                      np.linalg.norm(destruct(d.grad))],
+                     np.linalg.norm(destruct(d.grad))],
                      precision='5f'), flush=True)
 
 

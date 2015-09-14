@@ -5,8 +5,11 @@ from toolz.functoolz import isunary
 from toolz import first, second, compose
 from collections import OrderedDict
 from multipledispatch import dispatch
+from functools import wraps
 
-__all__ = ['check_grad', 'destruct', 'restruct']
+__all__ = ['check_grad', 'destruct', 'restruct', 'minibatchify']
+DESTRUCT_DOCSTR = """Deconstructs the input into a 1-D numpy array"""
+RESTRUCT_DOCSTR = """Reconstructs the input into the type of the second argument"""
 
 
 def wrap(f_df, xref, size=1):
@@ -30,14 +33,32 @@ def wrap(f_df, xref, size=1):
     return objective, gradient
 
 
-def lrucache(fun, size):
+def docstring(docstr):
+    """
+    Decorates a function with the given docstring
+
+    Parameters
+    ----------
+    docstr : string
+
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        wrapper.__doc__ = docstr
+        return wrapper
+    return decorator
+
+
+def lrucache(func, size):
     """
     A simple implementation of a least recently used (LRU) cache.
     Memoizes the recent calls of a computationally intensive function.
 
     Parameters
     ----------
-    fun : function
+    func : function
         Must be unary (takes a single argument)
 
     size : int
@@ -45,7 +66,7 @@ def lrucache(fun, size):
     """
 
     # this only works for unary functions
-    assert isunary(fun), "The function must be unary (take a single argument)"
+    assert isunary(func), "The function must be unary (take a single argument)"
 
     # initialize the cache
     cache = OrderedDict()
@@ -66,11 +87,38 @@ def lrucache(fun, size):
                 cache.popitem(last=False)
 
             # store the new value in the cache
-            cache[key] = fun(x)
+            cache[key] = func(x)
 
         return cache[key]
 
     return wrapper
+
+
+def minibatchify(gen):
+    """
+    Takes an objective fun. and a data generator and returns an noisy oracle
+
+    Parameters
+    ----------
+    gen : generator
+        Generates data that is passed to an objective function
+
+    Returns
+    -------
+    decorator : function
+        A function decorator that wraps an objective function & gradient
+
+    """
+
+    def decorate(f_df):
+
+        @wraps(f_df)
+        def wrapper(theta):
+            return f_df(theta, next(gen))
+
+        return wrapper
+
+    return decorate
 
 
 def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
@@ -127,18 +175,21 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         out.flush()
 
 
+@docstring(DESTRUCT_DOCSTR)
 @dispatch(int)
 def destruct(x):
     """Convert an int to a numpy array"""
     return destruct(float(x))
 
 
+@docstring(DESTRUCT_DOCSTR)
 @dispatch(float)
 def destruct(x):
     """Convert a float to a numpy array"""
     return np.array([x])
 
 
+@docstring(DESTRUCT_DOCSTR)
 @dispatch(dict)
 def destruct(x):
     """
@@ -150,6 +201,7 @@ def destruct(x):
     return destruct([x[k] for k in sorted(x)])
 
 
+@docstring(DESTRUCT_DOCSTR)
 @dispatch(tuple)
 def destruct(x):
     """
@@ -159,6 +211,7 @@ def destruct(x):
     return destruct(list(x))
 
 
+@docstring(DESTRUCT_DOCSTR)
 @dispatch(list)
 def destruct(x):
     """
@@ -173,6 +226,7 @@ def destruct(x):
     return pipe(x, map(np.ravel), concat, list, np.array)
 
 
+@docstring(DESTRUCT_DOCSTR)
 @dispatch(np.ndarray)
 def destruct(x):
     """
@@ -183,16 +237,18 @@ def destruct(x):
     return x.ravel()
 
 
+@docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, int)
 def restruct(x, ref):
     return float(x)
 
-
+@docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, float)
 def restruct(x, ref):
     return float(x)
 
 
+@docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, dict)
 def restruct(x, ref):
     """
@@ -209,6 +265,7 @@ def restruct(x, ref):
     return d
 
 
+@docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, np.ndarray)
 def restruct(x, ref):
     """
@@ -218,6 +275,7 @@ def restruct(x, ref):
     return x.reshape(ref.shape)
 
 
+@docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, tuple)
 def restruct(x, ref):
     """
@@ -227,6 +285,7 @@ def restruct(x, ref):
     return tuple(restruct(x, list(ref)))
 
 
+@docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, list)
 def restruct(x, ref):
     """
