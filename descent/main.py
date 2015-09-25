@@ -43,9 +43,9 @@ def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3):
     """
 
     # make sure the algorithm is valid
-    valid = ['gdm', 'rmsprop']
+    valid = ['gdm', 'rmsprop', 'adam']
     assert algorithm.func_name in valid, \
-        "Full batch algorithm must be one of: " + ", ".join(valid)
+        "Algorithm must be one of: " + ", ".join(valid)
 
     # get functions for the objective and gradient of the function
     obj, grad = wrap(f_df, xref)

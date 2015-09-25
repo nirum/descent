@@ -3,7 +3,7 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent.algorithms import gdm, rmsprop
+from descent.algorithms import gdm, rmsprop, adam
 from descent.main import optimize
 
 
@@ -33,7 +33,8 @@ def test_rosen(tol=1e-2):
 
     # list of algorithms to test (and their parameters)
     algorithms = [gdm(lr=1e-3, momentum=0.2),
-                  rmsprop(lr=1e-3)]
+                  rmsprop(lr=1e-3),
+                  adam]
 
     # loop over algorithms
     for alg in algorithms:

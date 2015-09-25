@@ -31,7 +31,7 @@ def gdm(df, x0, maxiter, lr=1e-2, momentum=0., decay=0.):
     """
 
     # initialize parameters and velocity
-    xk = x0.copy()
+    xk = x0.copy().astype('float')
     vk = np.zeros_like(xk)
 
     for k in range(int(maxiter)):
@@ -66,7 +66,7 @@ def rmsprop(df, x0, maxiter, lr=1e-2, damping=0.1, decay=0.9):
     """
 
     # initialize parameters and velocity
-    xk = x0.copy()
+    xk = x0.copy().astype('float')
     rms = np.zeros_like(xk)
 
     for k in range(int(maxiter)):
@@ -103,7 +103,7 @@ def sag(df, x0, maxiter, nterms, lr=1e-2):
     gradients = [df(x0, j) for j in range(nterms)]
 
     # initialize parameters
-    xk = x0.copy()
+    xk = x0.copy().astype('float')
 
     for k in range(int(maxiter)):
 
@@ -118,3 +118,55 @@ def sag(df, x0, maxiter, nterms, lr=1e-2):
         xk -= lr * grad
 
         yield xk
+
+@curry
+def adam(df, x0, maxiter, lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
+    """
+    ADAM
+
+    See: http://arxiv.org/abs/1412.6980
+
+    Parameters
+    ----------
+    df : function
+
+    x0 : array_like
+
+    maxiter : int
+
+    lr : float, optional
+        Learning rate (Default: 1e-2)
+
+    beta : (b1, b2), optional
+        Exponential decay rates for the moment estimates
+
+    epsilon : float, optional
+        Damping factor
+
+    """
+
+    # initialize parameters and velocity
+    xk = x0.copy().astype('float')
+    momentum = np.zeros_like(xk)
+    velocity = np.zeros_like(xk)
+    b1, b2 = beta
+
+    for k in range(int(maxiter)):
+
+        grad = df(xk)
+
+        # update momentum
+        momentum = b1 * momentum + (1 - b1) * grad
+
+        # update velocity
+        velocity = b2 * velocity + (1 - b2) * (grad ** 2)
+
+        # normalize
+        momentum_normalized = momentum / (1 - b1 ** (k+1))
+        velocity_normalized = np.sqrt(velocity / (1 - b2 ** (k+1)))
+
+        # gradient descent update
+        xk -= lr * momentum_normalized / (epsilon + velocity_normalized)
+
+        yield xk
+

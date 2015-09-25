@@ -14,7 +14,7 @@ def test_fixedpoint():
     def f_df(x):
         return 0.5 * x.T.dot(x), x
 
-    xstar = np.array([0, 0])
+    xstar = np.array([0., 0.])
     obj, grad = wrap(f_df, xstar)
     opt = gdm(grad, xstar, 10)
     assert np.allclose(next(opt), xstar)
