@@ -57,11 +57,18 @@ def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3):
     # run the optimizer
     for k, xk in enumerate(algorithm(grad, x0, maxiter)):
 
-        # get the objective and gradient and pass it to the callbacks
-        callback(datum(obj=obj(xk),
-                       grad=restruct(grad(xk), xref),
-                       params=restruct(xk, xref),
-                       iteration=k))
+        try:
+
+            # get the objective and gradient and pass it to the callbacks
+            callback(datum(obj=obj(xk),
+                        grad=restruct(grad(xk), xref),
+                        params=restruct(xk, xref),
+                        iteration=k))
+
+        except KeyboardInterrupt:
+
+            print('Stopping at iteration {}!'.format(k+1))
+            return restruct(xk, xref)
 
     # return the final parameters, reshaped in the original format
     return restruct(xk, xref)

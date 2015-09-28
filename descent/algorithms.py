@@ -3,10 +3,82 @@ First order gradient descent algorithms
 """
 
 from toolz.curried import curry
+from .classify import GradientOptimizer, ProximalOptimizer
 import numpy as np
 
-__all__ = ['gdm', 'rmsprop']
+__all__ = ['gdm', 'rmsprop', 'adam']
 
+
+class GradientDescent(GradientOptimizer):
+
+    def __init__(self, f_df, theta_init, learning_rate=1e-3):
+        self.learning_rate = learning_rate
+        super().__init__(f_df, theta_init)
+
+    def __iter__(self):
+        """
+        Initialize the generator
+        """
+
+        self.k = 0
+        xk = self.theta_init.copy().astype('float')
+
+        for k in range(self.maxiter):
+            with self as state:
+                obj = state.obj(xk)
+                grad = state.gradient(xk)
+                xk = xk - state.learning_rate * grad
+                yield obj, xk
+
+
+class ProximalDescent(ProximalOptimizer):
+
+    def __init__(self, proxop, rho, gradient, lr=1e-3):
+        self.proxop = proxop
+        self.rho = rho
+        self.lr = lr
+        self.xinit = xinit
+        self.df = gradient
+
+    def __iter__(self):
+
+        xk = self.xinit.copy().astype('float')
+
+        for k in range(self.maxiter):
+            with self as state:
+                obj, grad = state.f_df(state.xk)
+                xk = state.proxop(xk - state.lr * grad, state.rho)
+                yield obj, xk
+
+
+class ADMM(object):
+
+    def __init__(self, f, g, rho, xinit):
+        self.f = f
+        self.g = g
+        self.rho = rho
+        self.xinit = xinit
+
+    def __iter__(self):
+        """
+        Initialize the generator
+        """
+
+        self.xk = self.xinit.copy().astype('float')
+        self.zk = self.xinit.copy().astype('float')
+        self.uk = np.zeros(self.xk.size)
+        self.k = 0
+
+        return self
+
+    def __next__(self):
+
+        with self as state:
+            state.xk = state.f(state.zk - state.uk, state.rho)
+            state.zk = state.g(state.xk + state.uk, state.rho)
+            state.uk += state.xk - state.zk
+
+        return self.xk
 
 @curry
 def gdm(df, x0, maxiter, lr=1e-2, momentum=0., decay=0.):

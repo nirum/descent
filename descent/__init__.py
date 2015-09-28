@@ -17,7 +17,8 @@ __all__ = [
     'main',
     'algorithms',
     'utils',
-    'callbacks'
+    'callbacks',
+    'classify'
     ]
 
 from .algorithms import *
