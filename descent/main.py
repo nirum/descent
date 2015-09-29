@@ -3,8 +3,7 @@ Main routines for the descent package
 """
 
 from toolz.curried import curry, juxt
-from .utils import wrap, destruct, restruct
-from .callbacks import datum
+from .utils import wrap, destruct, restruct, datum
 
 __all__ = ['optimize']
 

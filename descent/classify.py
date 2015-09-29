@@ -1,8 +1,10 @@
 import numpy as np
 import time
-from .utils import wrap, destruct, restruct
+from .utils import wrap, destruct, restruct, datum
 from collections import defaultdict
 from toolz.curried import juxt
+from .display import Ascii
+from .storage import List
 
 
 # this is the awesome master Optimizer superclass, used to house properties
@@ -19,12 +21,21 @@ class Optimizer(object):
         self.suspended = False
         self.completed = False
 
-        # time stuff
-        self.timers = defaultdict(list)
+        # time each iteration
+        self.runtimes = [0.]
 
+        # display and storage
+        self.display = Ascii()
+        self.storage = List()
+
+        # custom callbacks
         self.callbacks = []
 
     def run(self, maxiter=1e2):
+
+        if self.completed:
+            print('Already finished!')
+            return None
 
         if self.started:
             print('Already started!')
@@ -34,39 +45,33 @@ class Optimizer(object):
             print('Already started!')
             return None
 
-        if self.completed:
-            print('Already finished!')
-            return None
-
         self.started = True
         self.maxiter = int(maxiter)
-        self.runtimes = list()
 
-        callback_func = juxt(*self.callbacks)
+        callback_func = juxt(self.display, self.storage, *self.callbacks)
 
-        for obj, params in self:
+        try:
 
-            try:
+            for k, val in enumerate(self):
 
-                # run callbacks
-                callback_func(obj, params)
+                # pull values out
+                obj, params, grad = val
 
-                # display
-                print('Error = {}'.format(obj), flush=True)
+                # build the datum
+                d = datum(k, obj, params, grad, self.runtimes[-1])
 
-                # storage
-                # self.results.append(...)
+                # farm out to callbacks
+                callback_func(d)
 
-            except KeyboardInterrupt:
-                print('Shutting Down!')
+        except KeyboardInterrupt:
+            print('Shutting Down!')
 
-                # TODO: deal with shut down
-
-                self.suspended = True
-
-                break
+            self.display.cleanup(d, self.runtimes)
+            self.suspended = True
+            return params
 
         self.completed = True
+        self.display.cleanup(d, self.runtimes)
         return params
 
     def reset(self, *args, **kwargs):
@@ -80,7 +85,7 @@ class Optimizer(object):
     def __enter__(self):
 
         # time the running time of the inner loop computation
-        self.inner_timer = time.time()
+        self.iteration_time = time.time()
 
         return self
 
@@ -89,7 +94,7 @@ class Optimizer(object):
         exit(self, type, value, traceback)
         """
 
-        self.timers['inner'].append(time.time() - self.inner_timer)
+        self.runtimes.append(time.time() - self.iteration_time)
 
     def __str__(self):
         return self.__class__.__name__

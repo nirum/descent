@@ -10,7 +10,7 @@ from .utils import destruct
 from collections import namedtuple
 
 __all__ = ['disp', 'store']
-datum = namedtuple('Datum', ['iteration', 'obj', 'grad', 'params'])
+datum = namedtuple('Datum', ['iteration', 'objective', 'gradient', 'parameters', 'runtime'])
 
 
 @curry

@@ -3,13 +3,17 @@ import numpy as np
 from toolz.curried import concat, map, pipe, curry
 from toolz.functoolz import isunary
 from toolz import first, second, compose
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from multipledispatch import dispatch
 from functools import wraps
 
 __all__ = ['check_grad', 'destruct', 'restruct', 'minibatchify']
+
 DESTRUCT_DOCSTR = """Deconstructs the input into a 1-D numpy array"""
-RESTRUCT_DOCSTR = """Reconstructs the input into the type of the second argument"""
+RESTRUCT_DOCSTR = """Reshapes the input into the type of the second argument"""
+
+# data type that is being passed around per iteration
+datum = namedtuple('Datum', ['iteration', 'obj', 'grad', 'params', 'runtime'])
 
 
 def wrap(f_df, xref, size=1):
