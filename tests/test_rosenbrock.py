@@ -32,7 +32,7 @@ def test_rosen(tol=1e-2):
     assert np.all(rosenbrock(xstar)[1] == 0)
 
     # list of algorithms to test (and their parameters)
-    algorithms = [(sgd, {'learning_rate': 1e-3}),
+    algorithms = [(sgd, {'learning_rate': 1e-3, 'momentum': 0.1}),
                   (rmsprop, {'learning_rate': 1e-3}),
                   (adam, {'learning_rate': 1e-3})]
 
@@ -41,6 +41,7 @@ def test_rosen(tol=1e-2):
 
         # initialize
         optimizer = algorithm(rosenbrock, np.zeros(2), **kwargs)
+        optimizer.display = None
 
         # run the optimization algorithm
         xhat = optimizer.run(maxiter=1e4)

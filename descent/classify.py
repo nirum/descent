@@ -26,6 +26,9 @@ class Optimizer(object):
         # custom callbacks
         self.callbacks = []
 
+        # default maxiter
+        self.maxiter = 100
+
     def run(self, maxiter=1e2):
 
         if self.completed:
@@ -43,7 +46,9 @@ class Optimizer(object):
         self.started = True
         self.maxiter = int(maxiter)
 
-        callback_func = juxt(self.display, self.storage, *self.callbacks)
+        self.callbacks.append(self.display) if self.display else None
+        self.callbacks.append(self.storage) if self.storage else None
+        callback_func = juxt(*self.callbacks)
 
         try:
 
@@ -61,12 +66,12 @@ class Optimizer(object):
         except KeyboardInterrupt:
             print('Shutting Down!')
 
-            self.display.cleanup(d, self.runtimes)
+            self.display.cleanup(d, self.runtimes) if self.display else None
             self.suspended = True
             return params
 
         self.completed = True
-        self.display.cleanup(d, self.runtimes)
+        self.display.cleanup(d, self.runtimes) if self.display else None
         return restruct(params, self.theta_init)
 
     def reset(self, *args, **kwargs):
