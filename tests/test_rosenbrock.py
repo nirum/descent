@@ -3,7 +3,7 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent.algorithms import gdm, rmsprop, adam
+from descent.algorithms import sgd, rmsprop, adam
 from descent.main import optimize
 
 
@@ -32,13 +32,16 @@ def test_rosen(tol=1e-2):
     assert np.all(rosenbrock(xstar)[1] == 0)
 
     # list of algorithms to test (and their parameters)
-    algorithms = [gdm(lr=1e-3, momentum=0.2),
-                  rmsprop(lr=1e-3),
-                  adam]
+    algorithms = [(sgd, {'learning_rate': 1e-3}),
+                  (rmsprop, {'learning_rate': 1e-3}),
+                  (adam, {'learning_rate': 1e-3})]
 
     # loop over algorithms
-    for alg in algorithms:
+    for algorithm, kwargs in algorithms:
+
+        # initialize
+        optimizer = algorithm(rosenbrock, np.zeros(2), **kwargs)
 
         # run the optimization algorithm
-        xhat = optimize(alg, rosenbrock, np.zeros(2), maxiter=1e4)
+        xhat = optimizer.run(maxiter=1e4)
         assert np.linalg.norm(xhat-xstar) <= tol

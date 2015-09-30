@@ -3,6 +3,7 @@ First order gradient descent algorithms
 """
 
 from .classify import GradientOptimizer, ProximalOptimizer
+from .utils import destruct
 import numpy as np
 from collections import deque
 
@@ -22,7 +23,7 @@ class GradientDescent(GradientOptimizer):
         Initialize the generator
         """
 
-        xk = self.theta_init.copy().astype('float')
+        xk = destruct(self.theta_init).copy().astype('float')
         vk = np.zeros_like(xk)
 
         for k in range(self.maxiter):
@@ -72,7 +73,7 @@ class RMSProp(GradientOptimizer):
 
     def __iter__(self):
 
-        xk = self.theta_init.copy().astype('float')
+        xk = destruct(self.theta_init).copy().astype('float')
         rms = np.zeros_like(xk)
 
         for k in range(self.maxiter):
@@ -113,7 +114,7 @@ class StochasticAverageGradient(GradientOptimizer):
     def __iter__(self):
 
         # initialize parameters
-        xk = self.theta_init.copy().astype('float')
+        xk = destruct(self.theta_init).copy().astype('float')
 
         # initialize gradients
         gradients = deque([], self.nterms)
@@ -170,7 +171,7 @@ class Adam(GradientOptimizer):
     def __iter__(self):
 
         # initialize parameters and velocity
-        xk = self.theta_init.copy().astype('float')
+        xk = destruct(self.theta_init).copy().astype('float')
         momentum = np.zeros_like(xk)
         velocity = np.zeros_like(xk)
         b1, b2 = self.beta

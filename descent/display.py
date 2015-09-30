@@ -15,7 +15,7 @@ defaults = {
     'gradnorm': True,
     'runtime': True,
     'width': 15,
-    'spec': '5f'
+    'spec': '5g'
 }
 
 class Display(object):

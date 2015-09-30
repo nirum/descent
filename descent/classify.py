@@ -16,13 +16,8 @@ class Optimizer(object):
         Optimization base class
         """
 
-        # flags to keep track of the state of the optimizer
-        self.started = False
-        self.suspended = False
-        self.completed = False
-
-        # time each iteration
-        self.runtimes = [0.]
+        # clear
+        self.reset()
 
         # display and storage
         self.display = Ascii()
@@ -58,7 +53,7 @@ class Optimizer(object):
                 obj, params, grad = val
 
                 # build the datum
-                d = datum(k, obj, params, grad, self.runtimes[-1])
+                d = datum(k, obj, restruct(params, self.theta_init), restruct(grad, self.theta_init), self.elapsed)
 
                 # farm out to callbacks
                 callback_func(d)
@@ -72,13 +67,15 @@ class Optimizer(object):
 
         self.completed = True
         self.display.cleanup(d, self.runtimes)
-        return params
+        return restruct(params, self.theta_init)
 
     def reset(self, *args, **kwargs):
 
         self.started = False
         self.completed = False
         self.suspended = False
+        self.elapsed = 0.
+        self.runtimes = []
 
     # because why not make each Optimizer a ContextManager
     # (used to wrap the per-iteration computation)
@@ -94,7 +91,9 @@ class Optimizer(object):
         exit(self, type, value, traceback)
         """
 
-        self.runtimes.append(time.time() - self.iteration_time)
+        runtime = time.time() - self.iteration_time
+        self.runtimes.append(runtime)
+        self.elapsed += runtime
 
     def __str__(self):
         return self.__class__.__name__
@@ -112,8 +111,8 @@ class GradientOptimizer(Optimizer):
         # memoize the given objective function
         self.obj, self.gradient = wrap(f_df, theta_init)
 
-        # store the initial parameters, unraveled into a 1-D numpy array
-        self.theta_init = destruct(theta_init)
+        # store the initial parameters, in the original format
+        self.theta_init = theta_init
 
         super().__init__()
 
