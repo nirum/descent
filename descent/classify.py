@@ -5,7 +5,7 @@ from collections import defaultdict
 from toolz.curried import juxt
 from .display import Ascii
 from .storage import List
-
+from builtins import super
 
 # this is the awesome master Optimizer superclass, used to house properties
 # for all optimization algorithms

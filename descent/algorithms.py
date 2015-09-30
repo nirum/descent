@@ -6,6 +6,7 @@ from .classify import GradientOptimizer, ProximalOptimizer
 from .utils import destruct
 import numpy as np
 from collections import deque
+from builtins import super
 
 __all__ = ['GradientDescent', 'RMSProp', 'Adam', 'StochasticAverageGradient',
            'adam', 'rmsprop', 'sgd', 'sag']
