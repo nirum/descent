@@ -2,6 +2,7 @@
 Storage options
 """
 
+import numpy as np
 from .utils import datum
 from toolz import merge, keyfilter
 
@@ -53,3 +54,12 @@ class List(list, Storage):
     def __call__(self, d):
 
         self.append(keyfilter(lambda k: k in self.keys, d._asdict()))
+
+    def get(self, key):
+        return np.array([d[key] for d in self])
+
+    def __str__(self):
+        return 'List storage, {} items'.format(len(self))
+
+    def __repr__(self):
+        return str(self)

@@ -3,7 +3,7 @@ Proximal algorithms
 """
 
 from .main import Optimizer
-from .utils import destruct
+from .utils import destruct, wrap
 from .proxops import getprox, ProximalOperator
 import numpy as np
 from collections import deque, namedtuple
