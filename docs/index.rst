@@ -3,8 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Descent's documentation!
-===================================
+=====================================
+Descent: optimization tools in python
+=====================================
+
+
+`descent`_ is a library for optimization.
+
+.. note:: Descent is under active development. Please refer to these pages or the Github repository for the latest info.
+
+.. _descent: https://github.com/nirum/descent/
 
 Contents:
 
@@ -12,10 +20,7 @@ Contents:
    :maxdepth: 2
 
    install
-   quickstart
    api
-   changelog
-
 
 
 Indices and tables

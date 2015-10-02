@@ -4,30 +4,6 @@ descent package
 Submodules
 ----------
 
-descent.algorithms module
--------------------------
-
-.. automodule:: descent.algorithms
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-descent.callbacks module
-------------------------
-
-.. automodule:: descent.callbacks
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-descent.classify module
------------------------
-
-.. automodule:: descent.classify
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 descent.display module
 ----------------------
 
@@ -36,10 +12,26 @@ descent.display module
     :undoc-members:
     :show-inheritance:
 
+descent.gradient_algorithms module
+----------------------------------
+
+.. automodule:: descent.gradient_algorithms
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 descent.main module
 -------------------
 
 .. automodule:: descent.main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+descent.proximal_algorithms module
+----------------------------------
+
+.. automodule:: descent.proximal_algorithms
     :members:
     :undoc-members:
     :show-inheritance:
