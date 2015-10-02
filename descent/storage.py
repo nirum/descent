@@ -20,7 +20,7 @@ class Storage(object):
 
     def __call__(self, d):
         """
-        takes a datum and prints it
+        takes a datum and stores it
         """
         raise NotImplementedError
 

@@ -15,15 +15,14 @@ For more information, see the accompanying README.md
 
 __all__ = [
     'main',
-    'algorithms',
+    'gradient_algorithms',
+    'proximal_algorithms',
     'utils',
-    'callbacks',
-    'classify'
     ]
 
-from .algorithms import *
 from .main import *
-from .callbacks import *
+from .gradient_algorithms import *
+from .proximal_algorithms import *
 from .utils import *
 
-__version__ = '0.0'
+__version__ = '0.0.1'

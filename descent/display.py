@@ -63,7 +63,7 @@ class Ascii(Display):
 
         if opts['runtime']:
             self.column_names.append('Runtime')
-            self.columns.append(lambda d: tp.hrtime(d.runtime))
+            self.columns.append(lambda d: tp.humantime(d.runtime))
 
         self.ncols = len(self.column_names)
 
@@ -74,13 +74,13 @@ class Ascii(Display):
     def hr(self):
         return tp.hr(self.ncols, self.width)
 
-    def __call__(self, d):
+    def start(self):
+        print('\n'.join((self.hr,
+                        tp.header(self.column_names, self.width),
+                        self.hr)), flush=True)
 
-        # initial call
-        if d.iteration == 0:
-            print('\n'.join((self.hr,
-                            tp.header(self.column_names, self.width),
-                            self.hr)), flush=True)
+
+    def __call__(self, d):
 
         # iteration update
         if d.iteration % self.every == 0:
@@ -90,6 +90,6 @@ class Ascii(Display):
 
         print(self.hr)
         print('-> Final objective: {}'.format(d.obj))
-        print('-> Total runtime: {}'.format(tp.hrtime(sum(runtimes))))
+        print('-> Total runtime: {}'.format(tp.humantime(sum(runtimes))))
         print('-> All done!\n')
 

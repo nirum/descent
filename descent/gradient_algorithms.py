@@ -2,8 +2,8 @@
 First order gradient descent algorithms
 """
 
-from .classify import GradientOptimizer, ProximalOptimizer
-from .utils import destruct
+from .main import Optimizer
+from .utils import destruct, wrap
 import numpy as np
 from collections import deque
 from builtins import super
@@ -11,27 +11,29 @@ from builtins import super
 __all__ = ['GradientDescent', 'RMSProp', 'Adam', 'StochasticAverageGradient',
            'adam', 'rmsprop', 'sgd', 'sag']
 
-class GradientDescent(GradientOptimizer):
+class GradientDescent(Optimizer):
 
     def __init__(self, f_df, theta_init, learning_rate=1e-3, momentum=0., decay=0.):
         self.lr = learning_rate
         self.momentum = momentum
         self.decay = decay
-        super().__init__(f_df, theta_init)
+
+        # initializes objective and gradient
+        self.obj, self.gradient = wrap(f_df, theta_init)
+        super().__init__(theta_init)
 
     def __iter__(self):
         """
         Initialize the generator
         """
 
-        xk = destruct(self.theta_init).copy().astype('float')
+        xk = destruct(self.theta).copy().astype('float')
         vk = np.zeros_like(xk)
 
         for k in range(self.maxiter):
             with self as state:
 
                 # compute objective and gradient
-                obj = state.obj(xk)
                 grad = state.gradient(xk)
 
                 # update velocity
@@ -41,10 +43,10 @@ class GradientDescent(GradientOptimizer):
                 xk += vnext
                 vk = vnext
 
-                yield obj, xk, grad
+                yield xk
 
 
-class RMSProp(GradientOptimizer):
+class RMSProp(Optimizer):
 
     def __init__(self, f_df, theta_init, learning_rate=1e-2, damping=0.1, decay=0.9):
         """
@@ -70,18 +72,20 @@ class RMSProp(GradientOptimizer):
         self.lr = learning_rate
         self.damping = damping
         self.decay = decay
-        super().__init__(f_df, theta_init)
+
+        # initializes objective and gradient
+        self.obj, self.gradient = wrap(f_df, theta_init)
+        super().__init__(theta_init)
 
     def __iter__(self):
 
-        xk = destruct(self.theta_init).copy().astype('float')
+        xk = destruct(self.theta).copy().astype('float')
         rms = np.zeros_like(xk)
 
         for k in range(self.maxiter):
             with self as state:
 
                 # compute objective and gradient
-                obj = state.obj(xk)
                 grad = state.gradient(xk)
 
                 # update RMS
@@ -90,11 +94,11 @@ class RMSProp(GradientOptimizer):
                 # gradient descent update
                 xk -= state.lr * grad / (state.damping + np.sqrt(rms))
 
-                yield obj, xk, grad
+                yield xk
 
 
-class StochasticAverageGradient(GradientOptimizer):
-    def __init__(self, f_df, theta_init, nterms, learning_rate=1e-2):
+class StochasticAverageGradient(Optimizer):
+    def __init__(self, f_df, theta, nterms, learning_rate=1e-2):
         """
         Stochastic Average Gradient (SAG)
 
@@ -110,12 +114,15 @@ class StochasticAverageGradient(GradientOptimizer):
 
         self.lr = learning_rate
         self.nterms = nterms
-        super().__init__(f_df, theta_init)
+
+        # initializes objective and gradient
+        self.obj, self.gradient = wrap(f_df, theta_init)
+        super().__init__(theta_init)
 
     def __iter__(self):
 
         # initialize parameters
-        xk = destruct(self.theta_init).copy().astype('float')
+        xk = destruct(self.theta).copy().astype('float')
 
         # initialize gradients
         gradients = deque([], self.nterms)
@@ -124,20 +131,18 @@ class StochasticAverageGradient(GradientOptimizer):
             with self as state:
 
                 # compute the objective and gradient
-                obj = state.obj(xk)
                 grad = state.gradient(xk)
 
                 # push the new gradient onto the deque, update the average
                 gradients.append(grad)
-                avg_grad = np.mean(gradients, axis=0)
 
                 # update
-                xk -= state.lr * avg_grad
+                xk -= state.lr * np.mean(gradients, axis=0)
 
-                yield obj, xk, avg_grad
+                yield xk
 
 
-class Adam(GradientOptimizer):
+class Adam(Optimizer):
 
     def __init__(self, f_df, theta_init, learning_rate=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
         """
@@ -167,12 +172,15 @@ class Adam(GradientOptimizer):
         self.lr = learning_rate
         self.beta = beta
         self.epsilon = epsilon
-        super().__init__(f_df, theta_init)
+
+        # initializes objective and gradient
+        self.obj, self.gradient = wrap(f_df, theta_init)
+        super().__init__(theta_init)
 
     def __iter__(self):
 
         # initialize parameters and velocity
-        xk = destruct(self.theta_init).copy().astype('float')
+        xk = destruct(self.theta).copy().astype('float')
         momentum = np.zeros_like(xk)
         velocity = np.zeros_like(xk)
         b1, b2 = self.beta
@@ -181,7 +189,6 @@ class Adam(GradientOptimizer):
             with self as state:
 
                 # compute objective and gradient
-                obj = state.obj(xk)
                 grad = state.gradient(xk)
 
                 # update momentum
@@ -197,58 +204,10 @@ class Adam(GradientOptimizer):
                 # gradient descent update
                 xk -= state.lr * momentum_normalized / (state.epsilon + velocity_normalized)
 
-                yield obj, xk, grad
+                yield xk
 
 # aliases
 sgd = GradientDescent
 adam = Adam
 sag = StochasticAverageGradient
 rmsprop = RMSProp
-
-class ProximalDescent(ProximalOptimizer):
-
-    def __init__(self, proxop, rho, gradient, lr=1e-3):
-        self.proxop = proxop
-        self.rho = rho
-        self.lr = lr
-        self.df = gradient
-
-    def __iter__(self):
-
-        xk = self.xinit.copy().astype('float')
-
-        for k in range(self.maxiter):
-            with self as state:
-                obj, grad = state.f_df(state.xk)
-                xk = state.proxop(xk - state.lr * grad, state.rho)
-                yield obj, xk
-
-
-class ADMM(object):
-
-    def __init__(self, f, g, rho, xinit):
-        self.f = f
-        self.g = g
-        self.rho = rho
-        self.xinit = xinit
-
-    def __iter__(self):
-        """
-        Initialize the generator
-        """
-
-        self.xk = self.xinit.copy().astype('float')
-        self.zk = self.xinit.copy().astype('float')
-        self.uk = np.zeros(self.xk.size)
-        self.k = 0
-
-        return self
-
-    def __next__(self):
-
-        with self as state:
-            state.xk = state.f(state.zk - state.uk, state.rho)
-            state.zk = state.g(state.xk + state.uk, state.rho)
-            state.uk += state.xk - state.zk
-
-        return self.xk

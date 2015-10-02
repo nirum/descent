@@ -2,72 +2,121 @@
 Main routines for the descent package
 """
 
-from toolz.curried import curry, juxt
-from .utils import wrap, destruct, restruct, datum
+import numpy as np
+import time
+from .utils import wrap, destruct, restruct
+from collections import defaultdict, namedtuple
+from toolz.curried import juxt
+from .display import Ascii
+from .storage import List
+from builtins import super
+from copy import deepcopy
 
-__all__ = ['optimize']
+Datum = namedtuple('Datum', ['iteration', 'obj', 'grad', 'params', 'runtime'])
 
+__all__ = ['Optimizer']
 
-@curry
-def optimize(algorithm, f_df, xref, callbacks=[], maxiter=1e3):
-    """
-    Main optimization loop
+# this is the awesome master Optimizer superclass, used to house properties
+# for all optimization algorithms
+class Optimizer(object):
 
-    Parameters
-    ----------
-    algorithm : function
-        A function which returns a generator that yields new iterates
-        in a descent sequence (for example, any of the other functions
-        in this module)
+    def __init__(self, theta_init):
+        """
+        Optimization base class
+        """
 
-    f_df : function
-        A function which takes one parameter (a numpy.ndarray of parameters)
-        and returns the objective and gradient at that location
+        # initialize storage of runtimes
+        self.runtimes = []
 
-    x0 : array_like
-        A numpy array consisting of the initial parameters
+        # display and storage
+        self.display = Ascii()
+        self.storage = List()
 
-    callbacks : list, optional
-        A list of functions, each which takes one parameter (a dictionary
-        containing metadata). These functions should have side effects, for
-        example, they can log the parameters or update a plot with the current
-        objective value. Called at each iteration.
+        # custom callbacks
+        self.callbacks = []
 
-    maxiter : int, optional
-        The maximum number of iterations (Default: 1000)
+        # default maxiter
+        self.maxiter = 1000
 
-    minibatches : list, optional
-        Used for minibatch optimization. An optional list of data (req)
+        self.theta = deepcopy(theta_init)
 
-    """
+    def run(self, maxiter=1e3):
 
-    # make sure the algorithm is valid
-    valid = ['gdm', 'rmsprop', 'adam']
-    assert algorithm.func_name in valid, \
-        "Algorithm must be one of: " + ", ".join(valid)
+        self.maxiter = int(maxiter)
+        starting_iteration = len(self)
+        callback_func = juxt(*self.callbacks)
 
-    # get functions for the objective and gradient of the function
-    obj, grad = wrap(f_df, xref)
-    x0 = destruct(xref)
-
-    # build the joint callback function
-    callback = juxt(*callbacks)
-
-    # run the optimizer
-    for k, xk in enumerate(algorithm(grad, x0, maxiter)):
+        # init display
+        if self.display:
+            self.display.start()
 
         try:
+            for ix, theta in enumerate(self):
 
-            # get the objective and gradient and pass it to the callbacks
-            callback(datum(obj=obj(xk),
-                        grad=restruct(grad(xk), xref),
-                        params=restruct(xk, xref),
-                        iteration=k))
+                k = starting_iteration + ix
+                obj = self.obj(theta)
+
+                if self.gradient:
+                    grad = self.restruct(self.gradient(theta))
+                else:
+                    grad = None
+
+                if len(self.runtimes) == 0:
+                    rt = 0.
+                else:
+                    rt = self.runtimes[-1]
+
+                # build the datum
+                d = Datum(k, obj, self.restruct(theta), grad, rt)
+
+                # farm out to callbacks
+                callback_func(d)
+
+                # display/storage
+                if self.display is not None:
+                    self.display(d)
+
+                if self.storage is not None:
+                    self.storage(d)
 
         except KeyboardInterrupt:
+            pass
 
-            print('Stopping at iteration {}!'.format(k+1))
-            return restruct(xk, xref)
+        self.display.cleanup(d, self.runtimes) if self.display else None
+        self.theta = self.restruct(theta)
 
-    # return the final parameters, reshaped in the original format
-    return restruct(xk, xref)
+    def __len__(self):
+        return len(self.runtimes)
+
+    def restruct(self, x):
+        return restruct(x, self.theta)
+
+    def reset(self):
+        self.runtimes = [0]
+
+    # because why not make each Optimizer a ContextManager
+    # (used to wrap the per-iteration computation)
+    def __enter__(self):
+        """
+        Enter
+        """
+
+        # time the running time of the inner loop computation
+        self.iteration_time = time.time()
+
+        return self
+
+    def __exit__(self, *args):
+        """
+        exit(self, type, value, traceback)
+        """
+
+        runtime = time.time() - self.iteration_time
+        self.runtimes.append(runtime)
+
+    def __str__(self):
+        return '{}\n{} iterations\nObjective: {}'.format(
+            self.__class__.__name__, len(self), self.obj(self.theta))
+
+    def __repr__(self):
+        return str(self)

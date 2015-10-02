@@ -3,9 +3,8 @@ Test optimization of a quadratic function
 """
 
 import numpy as np
-from descent.algorithms import sgd
+from descent import sgd
 from descent.utils import wrap
-from descent.main import optimize
 
 
 def test_fixedpoint():
@@ -19,8 +18,7 @@ def test_fixedpoint():
     xstar = np.array([0., 0.])
     gen = sgd(f_df, xstar).__iter__()
 
-    obj, xk, grad = next(gen)
-    assert np.allclose(xk, xstar)
+    assert np.allclose(next(gen), xstar)
 
 
 def test_quadratic_bowl():
@@ -41,7 +39,7 @@ def test_quadratic_bowl():
 
     opt = sgd(f_df, theta_init, learning_rate=1e-2)
     opt.display = None
-    theta_hat = opt.run(maxiter=1e3)
+    opt.run(maxiter=1e3)
 
-    for theta in zip(theta_hat, theta_true):
+    for theta in zip(opt.theta, theta_true):
         assert np.linalg.norm(theta[0] - theta[1]) <= tol

@@ -3,8 +3,7 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent.algorithms import sgd, rmsprop, adam
-from descent.main import optimize
+from descent import sgd, rmsprop, adam
 
 
 def rosenbrock(theta):
@@ -42,7 +41,8 @@ def test_rosen(tol=1e-2):
         # initialize
         optimizer = algorithm(rosenbrock, np.zeros(2), **kwargs)
         optimizer.display = None
+        optimizer.storage = None
 
         # run the optimization algorithm
-        xhat = optimizer.run(maxiter=1e4)
-        assert np.linalg.norm(xhat-xstar) <= tol
+        optimizer.run(maxiter=1e4)
+        assert np.linalg.norm(optimizer.theta - xstar) <= tol
