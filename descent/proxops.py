@@ -7,10 +7,13 @@ from functools import partial
 
 try:
     from scipy.optimize import minimize as scipy_minimize
+    from scipy.sparse import spdiags
+    from scipy.sparse.linalg import spsolve
 except ImportError:
     print('Scipy not found. L-BFGS not available as a proximal operator.')
 
-__all__ = ['getprox', 'nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error', 'ProximalOperator']
+__all__ = ['getprox', 'nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
+           'lbfgs', 'tvd', 'smooth', 'ProximalOperator']
 
 
 def getprox(name, *args, **kwargs):
@@ -36,6 +39,9 @@ class ProximalOperator:
 
     def objective(theta):
         raise NotImplementedError
+
+    def apply(self, v, rho):
+        self.__call__(v, rho)
 
 
 class nucnorm(ProximalOperator):
@@ -183,3 +189,67 @@ class lbfgs(ProximalOperator):
     def objective(self, theta):
         return self.f_df(theta)[0]
 
+
+class tvd(ProximalOperator):
+
+    def __init__(self, gamma):
+        self.gamma = gamma
+
+    def __call__(self, x0, rho):
+        """
+        Proximal operator for the total variation denoising penalty
+
+        Requires scikit-image be installed
+
+        Parameters
+        ----------
+        x0 : array_like
+            The starting or initial point used in the proximal update step
+
+        rho : float
+            Momentum parameter for the proximal step (larger value -> stays closer to x0)
+
+        gamma : float
+            A constant that weights how strongly to enforce the constraint
+
+        Returns
+        -------
+        theta : array_like
+            The parameter vector found after running the proximal update step
+
+        Raises
+        ------
+        ImportError
+            If scikit-image fails to be imported
+
+        """
+        try:
+            from skimage.restoration import denoise_tv_bregman
+        except ImportError:
+            print('Error: scikit-image not found. TVD will not work.')
+            return x0
+
+        return denoise_tv_bregman(x0, rho / self.gamma)
+
+
+class smooth(ProximalOperator):
+
+    def __init__(self, axis, gamma):
+        """
+        Applies a smoothing operator along one dimension
+
+        currently only accepts a matrix as input
+        """
+        self.axis = axis
+        self.gamma = gamma
+
+
+    def __call__(self, x0, rho):
+
+        # Apply Laplacian smoothing
+        n = x0.shape[self.axis]
+        lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
+
+        x_out = np.rollaxis(spsolve(self.gamma * lap_op, rho * np.rollaxis(x0, self.axis, 0)), self.axis, 0)
+
+        return x_out
