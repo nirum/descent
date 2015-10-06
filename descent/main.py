@@ -67,7 +67,7 @@ class Optimizer(object):
                     rt = self.runtimes[-1]
 
                 # build the datum
-                d = Datum(k, obj, self.restruct(theta), grad, rt)
+                d = Datum(k, obj, grad, self.restruct(theta), rt)
 
                 # farm out to callbacks
                 callback_func(d)
