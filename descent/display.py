@@ -89,7 +89,6 @@ class Ascii(Display):
     def cleanup(self, d, runtimes):
 
         print(self.hr)
-        print('-> Final objective: {}'.format(d.obj))
-        print('-> Total runtime: {}'.format(tp.humantime(sum(runtimes))))
-        print('-> All done!\n')
-
+        print(u'\u279b Final objective: {}'.format(d.obj))
+        print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(runtimes))))
+        print(u'\u279b All done!\n')
