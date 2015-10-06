@@ -4,6 +4,7 @@ playing around with proximal operators
 import numpy as np
 from collections import Callable
 from functools import partial
+from scipy.optimize import minimize as scipy_minimize
 
 __all__ = ['getprox', 'nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error', 'ProximalOperator']
 
@@ -151,3 +152,30 @@ class squared_error(ProximalOperator):
 
     def objective(self, theta):
         return np.linalg.norm(self.x_obs.ravel() - theta.ravel(), 2)
+
+
+class lbfgs(ProximalOperator):
+
+    def __init__(self, f_df, numiter=20.):
+        self.f_df = f_df
+        self.numiter = numiter
+
+    def f_df_augmented(self, theta):
+        f, df = self.f_df(theta)
+        obj = f + (self.rho / 2.) * np.linalg.norm(theta.ravel() - self.v.ravel()) ** 2
+        grad = df + self.rho * (theta - self.v)
+        return obj, grad
+
+    def __call__(self, x0, rho):
+
+        self.v = x0.copy()
+        self.rho = rho
+
+        res = scipy_minimize(self.f_df_augmented, x0, jac=True, method='L-BFGS-B',
+                             options={'maxiter': self.numiter, 'disp': False})
+
+        return res.x
+
+    def objective(self, theta):
+        return self.f_df(theta)[0]
+
