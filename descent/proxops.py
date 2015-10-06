@@ -4,7 +4,11 @@ playing around with proximal operators
 import numpy as np
 from collections import Callable
 from functools import partial
-from scipy.optimize import minimize as scipy_minimize
+
+try:
+    from scipy.optimize import minimize as scipy_minimize
+except ImportError:
+    print('Scipy not found. L-BFGS not available as a proximal operator.')
 
 __all__ = ['getprox', 'nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error', 'ProximalOperator']
 
