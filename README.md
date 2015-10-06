@@ -7,13 +7,21 @@
 
 Descent is a package for performing constrained and unconstrained first-order optimization.
 
-Full documentation is available at [descent.readthedocs.org](http://descent.readthedocs.org/en/latest/).
-
 It contains routines for running a number of different optimization algorithms, given a function that computes the gradient of the objective you wish to optimize.
 
 It also contains a bunch of useful helper files for converting parameter structures (lists or dictionaries) into arrays and back.
 
-# Requirements
+Full documentation is available at [descent.readthedocs.org](http://descent.readthedocs.org/en/latest/).
+
+## Contact
+For bugs, comments, concerns: use the Github issue tracker.
+
+Author: [Niru Maheswaranathan](http://niru.org/), nirum [a] stanford.edu
+
+## License
+MIT. See `LICENSE.md`
+
+## Requirements
 
 - Python 2.7 or higher
 - [numpy](http://www.numpy.org)
