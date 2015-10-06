@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/nirum/descent.svg?branch=master)](https://travis-ci.org/nirum/descent)
 [![Documentation Status](https://readthedocs.org/projects/descent/badge/?version=latest)](http://descent.readthedocs.org/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/nirum/descent/badge.svg?branch=master&service=github)](https://coveralls.io/github/nirum/descent?branch=master)
+[![PyPi version](https://img.shields.io/pypi/v/descent.svg)](https://pypi.python.org/pypi/descent)
 
 Descent is a package for performing constrained and unconstrained first-order optimization.
 
