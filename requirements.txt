@@ -1,4 +1,5 @@
 numpy
+scipy
 toolz
 multipledispatch
 tableprint
