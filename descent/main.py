@@ -40,11 +40,15 @@ class Optimizer(object):
 
         self.theta = deepcopy(theta_init)
 
-    def run(self, maxiter=1e3):
+    def run(self, maxiter=1e3, obj_tol=1e-8, param_tol=1e-5):
 
         self.maxiter = int(maxiter)
         starting_iteration = len(self)
         callback_func = juxt(*self.callbacks)
+
+        # store previous iterates
+        obj_prev = np.Inf
+        theta_prev = np.Inf
 
         # init display
         if self.display:
@@ -78,6 +82,17 @@ class Optimizer(object):
 
                 if self.storage is not None:
                     self.storage(d)
+
+                if np.abs(obj - obj_prev) <= obj_tol:
+                    print('{}: obj not changing!'.format(ix))
+                    break
+
+                elif np.linalg.norm(theta - theta_prev) <= param_tol:
+                    print('{}: theta not changing! {}'.format(ix, np.linalg.norm(theta - theta_prev)))
+                    break
+
+                theta_prev = theta.copy()
+                obj_prev = obj
 
         except KeyboardInterrupt:
             pass
