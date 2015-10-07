@@ -246,10 +246,17 @@ class smooth(ProximalOperator):
 
     def __call__(self, x0, rho):
 
-        # Apply Laplacian smoothing
+        # Apply Laplacian smoothing (l2 norm on the parameters multiplied by
+        # the laplacian)
         n = x0.shape[self.axis]
         lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
 
         x_out = np.rollaxis(spsolve(self.gamma * lap_op, rho * np.rollaxis(x0, self.axis, 0)), self.axis, 0)
 
         return x_out
+
+    def objective(self, x):
+        n = x.shape[self.axis]
+        # lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
+        # TODO: add objective for this operator
+        return 0

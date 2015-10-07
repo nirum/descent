@@ -12,7 +12,7 @@ defaults = {
     'every': 1,
     'iter': True,
     'obj': True,
-    'gradnorm': True,
+    'gradnorm': False,
     'runtime': True,
     'width': 15,
     'spec': '5g'

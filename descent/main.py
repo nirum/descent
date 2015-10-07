@@ -40,7 +40,7 @@ class Optimizer(object):
 
         self.theta = deepcopy(theta_init)
 
-    def run(self, maxiter=1e3, obj_tol=1e-8, param_tol=1e-5):
+    def run(self, maxiter=1e3, obj_tol=-1, param_tol=-1):
 
         self.maxiter = int(maxiter)
         starting_iteration = len(self)
