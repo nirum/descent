@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(name='descent',
-      version='0.0.4',
+      version='0.0.5',
       description='First order optimization tools',
       author='Niru Maheshwaranathan',
       author_email='nirum@stanford.edu',
       url='https://github.com/nirum/descent.git',
-      install_requires=['numpy', 'toolz', 'multipledispatch' 'tableprint', 'future'],
+      install_requires=['numpy', 'toolz', 'multipledispatch', 'tableprint', 'future'],
       long_description='''
           The descent package contains tools for performing first order
           optimization of functions. That is, given the gradient of an
