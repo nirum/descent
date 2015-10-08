@@ -7,7 +7,7 @@ setup(name='descent',
       author='Niru Maheshwaranathan',
       author_email='nirum@stanford.edu',
       url='https://github.com/nirum/descent.git',
-      requires=[i.strip() for i in open("requirements.txt").readlines()],
+      install_requires=[i.strip() for i in open("requirements.txt").readlines()],
       long_description='''
           The descent package contains tools for performing first order
           optimization of functions. That is, given the gradient of an
