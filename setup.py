@@ -1,8 +1,7 @@
 from setuptools import setup, find_packages
-import descent
 
 setup(name='descent',
-      version=descent.__version__,
+      version='0.0.3',
       description='First order optimization tools',
       author='Niru Maheshwaranathan',
       author_email='nirum@stanford.edu',
