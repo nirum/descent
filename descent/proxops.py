@@ -129,7 +129,7 @@ class linsys(ProximalOperator):
         return np.linalg.solve(rho * np.eye(self.q.size) + self.P, rho * v + self.q)
 
     def objective(self, theta):
-        return np.linalg.norm(A.dot(theta) - b, 2)
+        return 0.5 * np.linalg.norm(self.A.dot(theta) - self.b, 2) ** 2
 
 
 class squared_error(ProximalOperator):

@@ -39,21 +39,20 @@ class ProximalGradientDescent(Optimizer):
 
 class ADMM(Optimizer):
 
-    def __init__(self, theta_init, tau=(10., 2., 2.), tol=1e-6):
+    def __init__(self, theta_init, objective, *args, tau=(10., 2., 2.), tol=1e-6, **kwargs):
         """
         Consensus ADMM
         """
 
         # assert isinstance(objective, ProximalOperator), "Must be a proximal operator!"
-
-        self.operators = []
+        self.operators = [getprox(objective, *args, **kwargs)]
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
         self.gradient = None
         super().__init__(theta_init)
 
     def obj(self, x):
         # return np.sum([f.obj(x) for f in self.operators])
-        return 0.
+        return self.operators[0].objective(x)
 
     def add(self, name, *args, **kwargs):
         self.operators.append(getprox(name, *args, **kwargs))
