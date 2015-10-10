@@ -75,14 +75,12 @@ class AcceleratedProximalGradient(Optimizer):
 
 class ADMM(Optimizer):
 
-    def __init__(self, theta_init, objective, *args, tau=(10., 2., 2.), tol=1e-6, **kwargs):
+    def __init__(self, theta_init, tau=(10., 2., 2.), tol=1e-6):
         """
         Consensus ADMM
         """
 
-        # assert isinstance(objective, ProximalOperator), "Must be a proximal operator!"
         self.operators = []
-        self.add(objective, *args, **kwargs)
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
         self.gradient = None
         super().__init__(theta_init)
