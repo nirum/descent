@@ -37,8 +37,7 @@ def test_lowrank_matrix_approx():
     Xobs, Xtrue = generate_lowrank_matrix()
 
     # proximal algorithm for low rank matrix approximation
-    opt = ADMM(Xobs)
-    opt.add('squared_error', Xobs)
+    opt = ADMM(Xobs, 'squared_error', Xobs)
     opt.add('nucnorm', 0.2)
     opt.display = None
     opt.storage = None

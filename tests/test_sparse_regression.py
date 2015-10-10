@@ -40,8 +40,7 @@ def test_sparse_regression():
     xls = np.linalg.lstsq(A, y)[0]
 
     # proximal algorithm for sparse regression
-    opt = ADMM(xls)
-    opt.add('linsys', A=A, b=y)
+    opt = ADMM(xls, 'linsys', A=A, b=y)
     opt.add('sparse', 1.)
     opt.display = None
     opt.storage = None

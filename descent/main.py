@@ -135,3 +135,12 @@ class Optimizer(object):
 
     def __repr__(self):
         return str(self)
+
+    def _repr_html_(self):
+        return '''
+               <h2>{}</h2>
+               <p>{} iterations, objective: {}</p>
+               '''.format(
+                   self.__class__.__name__,
+                   len(self),
+                   self.obj(self.theta))

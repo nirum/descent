@@ -9,17 +9,17 @@ import numpy as np
 from collections import deque, namedtuple
 from builtins import super
 
-__all__ = ['ProximalGradientDescent', 'ADMM', 'pgd', 'admm']
+__all__ = ['ProximalGradientDescent', 'AcceleratedProximalGradient',
+           'ADMM', 'pgd', 'admm', 'apg']
 
 
 class ProximalGradientDescent(Optimizer):
 
-    def __init__(self, f_df, proxop, rho, theta_init, learning_rate=1e-3):
+    def __init__(self, f_df, theta_init, proxop, *args, learning_rate=1e-3, **kwargs):
 
         # assert isinstance(proxop, ProximalOperator), "Must be a proximal operator!"
 
-        self.proxop = proxop
-        self.rho = rho
+        self.proxop = getprox(proxop, *args, **kwargs)
         self.lr = learning_rate
 
         # initializes objective and gradient
@@ -33,7 +33,43 @@ class ProximalGradientDescent(Optimizer):
         for k in range(self.maxiter):
             with self as state:
                 grad = state.gradient(xk)
-                xk = state.proxop(xk - state.lr * grad, state.rho)
+                xk = state.proxop(xk - state.lr * grad, 1. / state.lr)
+                yield xk
+
+
+class AcceleratedProximalGradient(Optimizer):
+
+    def __init__(self, f_df, theta_init, proxop, *args, learning_rate=1e-3, **kwargs):
+
+        self.proxop = getprox(proxop, *args, **kwargs)
+        self.lr = learning_rate
+
+        self.obj, self.gradient = wrap(f_df, theta_init)
+        super().__init__(theta_init)
+
+    def __iter__(self):
+
+        xk = self.theta.copy().astype('float')
+        xprev = xk.copy()
+        yk = xk.copy()
+
+        for k in range(self.maxiter):
+            with self as state:
+
+                omega = k / (k + 3)
+
+                # update y's
+                yk = xk + omega * (xk - xprev)
+
+                # compute the gradient
+                grad = state.gradient(yk)
+
+                # update previous
+                xprev = xk
+
+                # compute the new iterate
+                xk = state.proxop(yk - state.lr * grad, 1. / state.lr)
+
                 yield xk
 
 
@@ -45,14 +81,14 @@ class ADMM(Optimizer):
         """
 
         # assert isinstance(objective, ProximalOperator), "Must be a proximal operator!"
-        self.operators = [getprox(objective, *args, **kwargs)]
+        self.operators = []
+        self.add(objective, *args, **kwargs)
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
         self.gradient = None
         super().__init__(theta_init)
 
     def obj(self, x):
-        # return np.sum([f.obj(x) for f in self.operators])
-        return self.operators[0].objective(x)
+        return 0 #np.sum([f.obj(x) for f in self.operators])
 
     def add(self, name, *args, **kwargs):
         self.operators.append(getprox(name, *args, **kwargs))
@@ -108,3 +144,4 @@ class ADMM(Optimizer):
 # aliases
 pgd = ProximalGradientDescent
 admm = ADMM
+apg = AcceleratedProximalGradient
