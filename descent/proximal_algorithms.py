@@ -15,11 +15,9 @@ __all__ = ['ProximalGradientDescent', 'AcceleratedProximalGradient',
 
 class ProximalGradientDescent(Optimizer):
 
-    def __init__(self, f_df, theta_init, proxop, *args, learning_rate=1e-3, **kwargs):
+    def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
 
-        # assert isinstance(proxop, ProximalOperator), "Must be a proximal operator!"
-
-        self.proxop = getprox(proxop, *args, **kwargs)
+        self.proxop = proxop
         self.lr = learning_rate
 
         # initializes objective and gradient
@@ -39,9 +37,9 @@ class ProximalGradientDescent(Optimizer):
 
 class AcceleratedProximalGradient(Optimizer):
 
-    def __init__(self, f_df, theta_init, proxop, *args, learning_rate=1e-3, **kwargs):
+    def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
 
-        self.proxop = getprox(proxop, *args, **kwargs)
+        self.proxop = proxop
         self.lr = learning_rate
 
         self.obj, self.gradient = wrap(f_df, theta_init)
