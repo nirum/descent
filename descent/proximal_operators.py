@@ -12,11 +12,11 @@ try:
 except ImportError:
     print('Scipy not found. L-BFGS not available as a proximal operator.')
 
-__all__ = ['getprox', 'nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
+__all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
            'lbfgs', 'tvd', 'smooth', 'ProximalOperator']
 
 
-def getprox(name, *args, **kwargs):
+def _getproxop(name, *args, **kwargs):
     """
     Loads a proximal operator
     """
@@ -38,7 +38,7 @@ class ProximalOperator:
         raise NotImplementedError
 
     def objective(theta):
-        raise NotImplementedError
+        return np.nan
 
     def apply(self, v, rho):
         self.__call__(v, rho)
