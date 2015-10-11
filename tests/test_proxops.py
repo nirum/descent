@@ -106,19 +106,23 @@ def test_smooth():
 
 def test_lbfgs():
 
-    # simple objective (quadratic)
-    def f_df(x):
-        return 0.5 * x ** 2, x
+    try:
+        # simple objective (quadratic)
+        def f_df(x):
+            return 0.5 * x ** 2, x
 
-    # proximal mapping solved via L-BFGS
-    op = proxops.lbfgs(f_df)
+        # proximal mapping solved via L-BFGS
+        op = proxops.lbfgs(f_df)
 
-    # tests
-    for rho in [0.1, 0.5, 1., 2.]:
-        for v in [0., 0.5, 1., 2., 10.]:
+        # tests
+        for rho in [0.1, 0.5, 1., 2.]:
+            for v in [0., 0.5, 1., 2., 10.]:
 
-            # test mapping
-            assert np.allclose(op(v, rho), np.array([rho * v / (1 + rho)]))
+                # test mapping
+                assert np.allclose(op(v, rho), np.array([rho * v / (1 + rho)]))
 
-            # test objective
-            assert np.allclose(op.objective(v), f_df(np.array(v))[0])
+                # test objective
+                assert np.allclose(op.objective(v), f_df(np.array(v))[0])
+
+    except ImportError:
+        pass
