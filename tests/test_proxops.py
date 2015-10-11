@@ -108,7 +108,7 @@ def test_lbfgs():
 
     try:
         import scipy
-    except ImportError
+    except ImportError:
         pass
         return
 
