@@ -4,9 +4,9 @@ Proximal algorithms
 
 from .main import Optimizer
 from .utils import destruct, wrap
-from .proxops import getprox, ProximalOperator
+from .proximal_operators import _getproxop, ProximalOperator
 import numpy as np
-from collections import deque, namedtuple
+from collections import deque, namedtuple, defaultdict
 from builtins import super
 
 __all__ = ['ProximalGradientDescent', 'AcceleratedProximalGradient',
@@ -73,21 +73,22 @@ class AcceleratedProximalGradient(Optimizer):
 
 class ADMM(Optimizer):
 
-    def __init__(self, theta_init, tau=(10., 2., 2.), tol=1e-6):
+    def __init__(self, theta_init, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
         """
         Consensus ADMM
         """
 
         self.operators = []
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
+        self.tol = namedtuple('tol', ('primal', 'dual'))(*tol)
         self.gradient = None
         super().__init__(theta_init)
 
     def obj(self, x):
-        return 0 #np.sum([f.obj(x) for f in self.operators])
+        return np.nansum([f.objective(self.restruct(x)) for f in self.operators])
 
     def add(self, name, *args, **kwargs):
-        self.operators.append(getprox(name, *args, **kwargs))
+        self.operators.append(_getproxop(name, *args, **kwargs))
 
     def __iter__(self):
 
@@ -99,6 +100,8 @@ class ADMM(Optimizer):
         duals = [np.zeros(self.theta.size) for _ in range(num_obj)]
         theta_avg = np.mean(primals, axis=0).ravel()
         rho = self.tau.init
+
+        self.resid = defaultdict(list)
 
         for k in range(self.maxiter):
             with self as state:
@@ -128,11 +131,14 @@ class ADMM(Optimizer):
                 elif dual_resid > self.tau.init * primal_resid:
                     rho /= float(self.tau.dec)
 
+                self.resid['primal'].append(primal_resid)
+                self.resid['dual'].append(dual_resid)
+                self.resid['rho'].append(rho)
+
                 # check for convergence
-                tol = 0
-                if (primal_resid <= tol) & (dual_resid <= tol):
+                if (primal_resid <= self.tol.primal) & (dual_resid <= self.tol.dual):
                     self.converged = True
-                    break
+                    raise StopIteration("Converged")
 
                 yield theta_avg
 
