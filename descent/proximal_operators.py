@@ -1,6 +1,8 @@
 """
-playing around with proximal operators
+Proximal operators / mappings
+
 """
+
 import numpy as np
 from collections import Callable
 from functools import partial
@@ -9,8 +11,8 @@ try:
     from scipy.optimize import minimize as scipy_minimize
     from scipy.sparse import spdiags
     from scipy.sparse.linalg import spsolve
-except ImportError:
-    print('Scipy not found. L-BFGS not available as a proximal operator.')
+except ImportError: # pragma no cover
+    print("Package 'scipy' not found. L-BFGS and smooth proximal operators will not work.")
 
 __all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
            'lbfgs', 'tvd', 'smooth', 'ProximalOperator']
@@ -19,6 +21,19 @@ __all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
 def _getproxop(name, *args, **kwargs):
     """
     Loads a proximal operator
+
+    Parameters
+    ----------
+
+    name : string or callable
+        If string, then it must be the name of one of the functions in the
+        proximal_operators module. If callable, it should subclass the
+        ProximalOperator class and have a __call__ function that takes as input
+        a set of parameters and a parameter rho, and returns the output of a
+        proximal map.
+
+    *args, **kwargs : optional arguments that are bound to the proximal map
+
     """
 
     if isinstance(name, Callable):
@@ -29,12 +44,15 @@ def _getproxop(name, *args, **kwargs):
         return globals()[name](*args, **kwargs)
 
     else:
-        raise ValueError("First argument must be a string or callable (see docs for more info)")
+        raise ValueError("First argument must be a string or callable. (see documentation)")
 
 
 class ProximalOperator:
+    """
+    Superclass for all proximal operators.
+    """
 
-    def __call__(v, rho):
+    def __call__(x0, rho):
         raise NotImplementedError
 
     def objective(theta):
@@ -178,7 +196,7 @@ class lbfgs(ProximalOperator):
 
     def __call__(self, x0, rho):
 
-        self.v = x0.copy()
+        self.v = np.array(x0).copy()
         self.rho = rho
 
         res = scipy_minimize(self.f_df_augmented, x0, jac=True, method='L-BFGS-B',
@@ -259,4 +277,4 @@ class smooth(ProximalOperator):
         n = x.shape[self.axis]
         # lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
         # TODO: add objective for this operator
-        return 0
+        return np.nan

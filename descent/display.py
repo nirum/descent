@@ -18,7 +18,7 @@ defaults = {
     'spec': '5g'
 }
 
-class Display(object):
+class Display(object): # pragma no cover
 
     def __init__(self):
         pass
@@ -37,7 +37,7 @@ class Display(object):
         """
         raise NotImplementedError
 
-class Ascii(Display):
+class Ascii(Display): # pragma no cover
 
     def __init__(self, **kwargs):
 

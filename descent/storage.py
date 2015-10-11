@@ -14,7 +14,7 @@ defaults = {
     'params': False
 }
 
-class Storage(object):
+class Storage(object): # pragma no cover
 
     def __init__(self):
         pass
@@ -31,7 +31,7 @@ class Storage(object):
         """
         raise NotImplementedError
 
-class List(list, Storage):
+class List(list, Storage): # pragma no cover
 
     def __init__(self, **kwargs):
 

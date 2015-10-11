@@ -4,7 +4,7 @@ Test suite for matrix approximation
 """
 
 import numpy as np
-from descent import ADMM
+from descent import ADMM, ProximalGradientDescent, AcceleratedProximalGradient, nucnorm
 
 
 def generate_lowrank_matrix(n=10, m=20, k=3, eta=0.05, seed=1234):
@@ -36,6 +36,13 @@ def test_lowrank_matrix_approx():
 
     Xobs, Xtrue = generate_lowrank_matrix()
 
+    # helper function to test relative error of given parameters
+    def test_error(Xhat):
+        test_err = np.linalg.norm(Xhat - Xtrue, 'fro')
+        naive_err = np.linalg.norm(Xobs - Xtrue, 'fro')
+        err_ratio = test_err / naive_err
+        assert err_ratio <= 0.5
+
     # proximal algorithm for low rank matrix approximation
     opt = ADMM(Xobs)
     opt.add('squared_error', Xobs)
@@ -43,11 +50,27 @@ def test_lowrank_matrix_approx():
     opt.display = None
     opt.storage = None
     opt.run(maxiter=100)
-    Xhat = opt.theta
 
-    test_err = np.linalg.norm(Xhat - Xtrue, 'fro')
-    naive_err = np.linalg.norm(Xobs - Xtrue, 'fro')
-    err_ratio = test_err / naive_err
-    print("The error ratio is: %5.4f" % err_ratio)
+    # test ADMM
+    test_error(opt.theta)
 
-    assert err_ratio <= 0.5
+    # Proximal gradient descent and Accelerated proximal gradient descent
+    for algorithm in [ProximalGradientDescent, AcceleratedProximalGradient]:
+
+        # objective
+        def f_df(X):
+            grad = X - Xtrue
+            obj = 0.5 * np.linalg.norm(grad.ravel()) ** 2
+            return obj, grad
+
+        # sparsity penalty
+        proxop = nucnorm(0.2)
+
+        # optimizer
+        opt = algorithm(f_df, Xobs, proxop, learning_rate=0.005)
+        opt.display = None
+        opt.storage = None
+        opt.run(maxiter=5000)
+
+        # test
+        test_error(opt.theta)

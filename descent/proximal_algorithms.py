@@ -16,6 +16,24 @@ __all__ = ['ProximalGradientDescent', 'AcceleratedProximalGradient',
 class ProximalGradientDescent(Optimizer):
 
     def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
+        """
+        Proximal gradient descent
+
+        Parameters
+        ----------
+        f_df : callable
+            Function that returns the objective and gradient
+
+        theta_init : array_like
+            Initial parameters
+
+        proxop : ProximalOperator
+            (e.g. from the proximal_operators module)
+
+        learning_rate : float, optional
+            default: 0.001
+
+        """
 
         self.proxop = proxop
         self.lr = learning_rate
@@ -30,7 +48,7 @@ class ProximalGradientDescent(Optimizer):
 
         for k in range(self.maxiter):
             with self as state:
-                grad = state.gradient(xk)
+                grad = self.restruct(state.gradient(xk))
                 xk = state.proxop(xk - state.lr * grad, 1. / state.lr)
                 yield xk
 
@@ -38,6 +56,24 @@ class ProximalGradientDescent(Optimizer):
 class AcceleratedProximalGradient(Optimizer):
 
     def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
+        """
+        Accelerated proximal gradient descent
+
+        Parameters
+        ----------
+        f_df : callable
+            Function that returns the objective and gradient
+
+        theta_init : array_like
+            Initial parameters
+
+        proxop : ProximalOperator
+            (e.g. from the proximal_operators module)
+
+        learning_rate : float, optional
+            default: 0.001
+
+        """
 
         self.proxop = proxop
         self.lr = learning_rate
@@ -60,7 +96,7 @@ class AcceleratedProximalGradient(Optimizer):
                 yk = xk + omega * (xk - xprev)
 
                 # compute the gradient
-                grad = state.gradient(yk)
+                grad = self.restruct(state.gradient(yk))
 
                 # update previous
                 xprev = xk
@@ -76,6 +112,12 @@ class ADMM(Optimizer):
     def __init__(self, theta_init, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
         """
         Consensus ADMM
+
+        Parameters
+        ----------
+        theta_init : array_like
+            Initial parameters
+
         """
 
         self.operators = []

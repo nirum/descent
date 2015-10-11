@@ -98,7 +98,7 @@ class RMSProp(Optimizer):
 
 
 class StochasticAverageGradient(Optimizer):
-    def __init__(self, f_df, theta, nterms, learning_rate=1e-2):
+    def __init__(self, f_df, theta_init, nterms, learning_rate=1e-2):
         """
         Stochastic Average Gradient (SAG)
 

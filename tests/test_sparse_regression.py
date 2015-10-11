@@ -4,7 +4,7 @@ Test suite for sparse regression
 """
 
 import numpy as np
-from descent import ADMM
+from descent import ADMM, ProximalGradientDescent, AcceleratedProximalGradient, sparse
 
 
 def generate_sparse_system(n=100, m=50, p=0.1, eta=0.05, seed=1234):
@@ -39,18 +39,42 @@ def test_sparse_regression():
     # least squares solution
     xls = np.linalg.lstsq(A, y)[0]
 
-    # proximal algorithm for sparse regression
+    # helper function to test relative error
+    def test_error(xhat):
+        test_err = np.linalg.norm(xhat - x_true, 2)
+        naive_err = np.linalg.norm(xls - x_true, 2)
+        err_ratio = test_err / naive_err
+        assert err_ratio <= 0.01
+
+    # ADMM
     opt = ADMM(xls)
     opt.add('linsys', A=A, b=y)
     opt.add('sparse', 1.)
     opt.display = None
     opt.storage = None
     opt.run(maxiter=100)
-    xhat = opt.theta
 
-    test_err = np.linalg.norm(xhat - x_true, 2)
-    naive_err = np.linalg.norm(xls - x_true, 2)
-    err_ratio = test_err / naive_err
-    print("The error ratio is: %5.4f" % err_ratio)
+    # test ADMM error
+    test_error(opt.theta)
 
-    assert err_ratio <= 0.01
+    # Proximal gradient descent and Accelerated proximal gradient descent
+    for algorithm in [ProximalGradientDescent, AcceleratedProximalGradient]:
+
+        # objective
+        def f_df(x):
+            err = A.dot(x) - y
+            obj = 0.5 * np.linalg.norm(err) ** 2
+            grad = A.T.dot(err)
+            return obj, grad
+
+        # sparsity penalty
+        proxop = sparse(1.)
+
+        # optimizer
+        opt = algorithm(f_df, xls, proxop, learning_rate=0.005)
+        opt.display = None
+        opt.storage = None
+        opt.run(maxiter=5000)
+
+        # test
+        test_error(opt.theta)
