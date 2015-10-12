@@ -7,7 +7,6 @@
 Descent: optimization tools in python
 =====================================
 
-
 `descent`_ is a library for optimization.
 
 .. note:: Descent is under active development. Please refer to these pages or the Github repository for the latest info.
@@ -19,7 +18,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   install
+   installation
+   quickstart
    api
 
 
@@ -29,4 +29,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

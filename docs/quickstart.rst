@@ -1,20 +1,49 @@
-=====================================
-descent: optimization tools in python
-=====================================
+==========
+Quickstart
+==========
 
-`descent`_ is a library for optimization.
+Overview
+--------
+This document is a work in progress, but for now, check out example code:
 
-.. note:: Descent is under active development. Please refer to these pages or the Github repository for the latest info.
+Gradient-based algorithms
+-------------------------
+Each of the gradient based algorithms has the following interface. Given a function ``f_df``
+that computes the objective and gradient of the function you want to minimize:
 
-.. _descent: https://github.com/nirum/descent/
+.. code:: python
 
-.. toctree::
-    :maxdepth: 1
-    :numbered:
+    >>> opt = descent.sgd(f_df, theta_init, learning_rate)
+    >>> opt.run(maxiter=1000)
+    >>> plt.plot(opt.theta)
 
-    install
-    quickstart
-    api
-    changelog
+Proximal algorithms
+-------------------
+Example code for ADMM, for solving a linear system with a sparsity penalty:
 
-:ref:`genindex` of all functions.
+.. code:: python
+
+    >>> opt = descent.ADMM(theta_init)
+    >>> opt.add('linsys', A, b)
+    >>> opt.add('sparse', 0.1)
+    >>> opt.run()
+    >>> plt.plot(opt.theta)
+
+
+Display and Storage
+-------------------
+Still working on these options!
+
+
+Utilities
+---------
+Some other features that might be of interest:
+
+- memoization (see: ``descent.utils.wrap``)
+- function wrapping (see: ``descent.utils.destruct`` and ``descent.utils.restruct``)
+- gradient checking (see: ``descent.check_grad``)
+
+
+Tutorial
+--------
+There is a tutorial consisting of jupyter notebooks demoing the features of descent at: `github.com/nirum/descent-tutorial <https://github.com/nirum/descent-tutorial/>`_.

@@ -1,73 +1,46 @@
-descent package
-===============
+=============
+API Reference
+=============
 
-Submodules
-----------
-
-descent.display module
+Main optimization loop
 ----------------------
-
-.. automodule:: descent.display
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-descent.gradient_algorithms module
-----------------------------------
-
-.. automodule:: descent.gradient_algorithms
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-descent.main module
--------------------
 
 .. automodule:: descent.main
     :members:
     :undoc-members:
     :show-inheritance:
 
-descent.proximal_algorithms module
-----------------------------------
+Gradient algorithms
+-------------------
+
+.. automodule:: descent.gradient_algorithms
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Proximal algorithms
+-------------------
 
 .. automodule:: descent.proximal_algorithms
     :members:
     :undoc-members:
     :show-inheritance:
 
-descent.proxops module
-----------------------
+Proximal operators
+------------------
 
-.. automodule:: descent.proxops
+.. automodule:: descent.proximal_operators
     :members:
     :undoc-members:
     :show-inheritance:
 
-descent.storage module
-----------------------
-
-.. automodule:: descent.storage
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-descent.utils module
---------------------
+Utilities
+---------
 
 .. automodule:: descent.utils
     :members:
     :undoc-members:
     :show-inheritance:
-
-descent.visualization module
-----------------------------
-
-.. automodule:: descent.visualization
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------
