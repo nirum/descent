@@ -210,8 +210,8 @@ class lbfgs(ProximalOperator):
 
 class tvd(ProximalOperator):
 
-    def __init__(self, gamma):
-        self.gamma = gamma
+    def __init__(self, penalty):
+        self.gamma = penalty
 
     def __call__(self, x0, rho):
         """
@@ -252,14 +252,14 @@ class tvd(ProximalOperator):
 
 class smooth(ProximalOperator):
 
-    def __init__(self, axis, gamma):
+    def __init__(self, axis, penalty):
         """
         Applies a smoothing operator along one dimension
 
         currently only accepts a matrix as input
         """
         self.axis = axis
-        self.gamma = gamma
+        self.gamma = penalty
 
 
     def __call__(self, x0, rho):

@@ -99,7 +99,7 @@ def test_smooth():
     x_obs = x_true + np.random.randn(x_true.size) * 0.2
 
     # smooth
-    x_smooth = proxops.smooth(axis=0, gamma=10)(x_obs, 1)
+    x_smooth = proxops.smooth(axis=0, penalty=10)(x_obs, 1)
 
     assert np.linalg.norm(x_true - x_smooth) < np.linalg.norm(x_true - x_obs)
 
