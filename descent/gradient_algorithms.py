@@ -11,6 +11,28 @@ from builtins import super
 __all__ = ['GradientDescent', 'RMSProp', 'Adam', 'StochasticAverageGradient']
 
 class GradientDescent(Optimizer):
+    """
+    Gradient Descent (with momentum)
+
+    Parameters
+    ----------
+    f_df : function
+        Objective and gradient function
+
+    theta_init : array_like
+        Initial parameters
+
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
+
+    momentum : float, optional
+        Momentum parameter (Default: 0)
+
+    decay : float, optional
+        Decay of the learning rate. Every iteration the learning rate decays
+        by a factor of 1/(decay+1), (Default: 0)
+
+    """
 
     def __init__(self, f_df, theta_init, learning_rate=1e-3, momentum=0., decay=0.):
         self.lr = learning_rate
@@ -46,27 +68,27 @@ class GradientDescent(Optimizer):
 
 
 class RMSProp(Optimizer):
+    """
+    RMSProp
 
-    def __init__(self, f_df, theta_init, learning_rate=1e-2, damping=0.1, decay=0.9):
-        """
-        RMSProp
+    Parameters
+    ----------
+    f_df : function
 
-        Parameters
-        ----------
-        df : function
+    theta_init : array_like
 
-        x0 : array_like
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
 
-        lr : float, optional
-            Learning rate (Default: 1e-2)
+    damping : float, optional
+        Damping term (Default: 0)
 
-        momentum : float, optional
-            Momentum (Default: 0)
+    decay : float, optional
+        Decay of the learning rate (Default: 0)
 
-        decay : float, optional
-            Decay of the learning rate (Default: 0)
+    """
 
-        """
+    def __init__(self, f_df, theta_init, learning_rate=1e-3, damping=0.1, decay=0.9):
 
         self.lr = learning_rate
         self.damping = damping
@@ -97,20 +119,26 @@ class RMSProp(Optimizer):
 
 
 class StochasticAverageGradient(Optimizer):
-    def __init__(self, f_df, theta_init, nterms, learning_rate=1e-2):
-        """
-        Stochastic Average Gradient (SAG)
+    """
+    Stochastic Average Gradient (SAG)
 
-        Parameters
-        ----------
-        df : function
+    Parameters
+    ----------
+    f_df : function
+        Objective & gradient
 
-        x0 : array_like
+    theta_init : array_like
+        Initial parameters
 
-        lr : float, optional
+    nterms : int
+        Number of gradient evaluations to use in the average
 
-        """
+    learning_rate : float, optional
+        (Default: 1e-3)
 
+    """
+
+    def __init__(self, f_df, theta_init, nterms, learning_rate=1e-3):
         self.lr = learning_rate
         self.nterms = nterms
 
@@ -142,31 +170,31 @@ class StochasticAverageGradient(Optimizer):
 
 
 class Adam(Optimizer):
+    """
+    ADAM
+
+    See: http://arxiv.org/abs/1412.6980
+
+    Parameters
+    ----------
+    f_df : function
+        Objective and gradient function
+
+    theta_init : array_like
+        Initial parameters
+
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
+
+    beta : (b1, b2), optional
+        Exponential decay rates for the moment estimates
+
+    epsilon : float, optional
+        Damping factor
+
+    """
 
     def __init__(self, f_df, theta_init, learning_rate=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
-        """
-        ADAM
-
-        See: http://arxiv.org/abs/1412.6980
-
-        Parameters
-        ----------
-        df : function
-
-        x0 : array_like
-
-        maxiter : int
-
-        lr : float, optional
-            Learning rate (Default: 1e-2)
-
-        beta : (b1, b2), optional
-            Exponential decay rates for the moment estimates
-
-        epsilon : float, optional
-            Damping factor
-
-        """
 
         self.lr = learning_rate
         self.beta = beta

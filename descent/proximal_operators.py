@@ -65,9 +65,30 @@ class ProximalOperator:
 class nucnorm(ProximalOperator):
 
     def __init__(self, penalty):
+        """
+        Proximal operator for the nuclear norm penalty
+
+        Parameters
+        ----------
+        penalty : float
+            Weight on the nuclear norm (lambda)
+
+        """
         self.penalty = penalty
 
     def __call__(self, x0, rho):
+        """
+        Applies the nuclear norm proximal operator
+
+        Parameters
+        ----------
+        x0 : array_like
+            Initial parameters (matrix)
+
+        rho : float
+            Quadratic penalty weight
+
+        """
         u, s, v = np.linalg.svd(x0, full_matrices=False)
         sthr = np.maximum(s - (self.penalty / float(rho)), 0)
         # return np.linalg.multi_dot((u, np.diag(sthr), v))
@@ -82,11 +103,29 @@ class sparse(ProximalOperator):
 
     def __init__(self, penalty):
         """
-        Soft thresholding
+        Proximal operator for the l1-norm: soft thresholding
+
+        Parameters
+        ----------
+        penalty : float
+            Strength or weight on the l1-norm
+
         """
         self.penalty = penalty
 
     def __call__(self, v, rho):
+        """
+        Applies the sparsifying (l1-norm) proximal operator
+
+        Parameters
+        ----------
+        x0 : array_like
+            Initial parameters
+
+        rho : float
+            Quadratic penalty weight
+
+        """
         lmbda = float(self.penalty) / rho
         return (v - lmbda) * (v >= lmbda) + (v + lmbda) * (v <= -lmbda)
 
@@ -96,9 +135,25 @@ class sparse(ProximalOperator):
 
 class nonneg(ProximalOperator):
     def __init__(self):
+        """
+        Proximal operator for the indicator function over the
+        non-negative orthant (projection onto non-negative orthant)
+        """
         pass
 
     def __call__(self, v, rho):
+        """
+        Projection onto the non-negative orthant
+
+        Parameters
+        ----------
+        x0 : array_like
+            Initial parameters
+
+        rho : float
+            Quadratic penalty weight (unused)
+
+        """
         return np.maximum(v, 0)
 
     def objective(self, theta):
@@ -111,6 +166,18 @@ class nonneg(ProximalOperator):
 class linsys(ProximalOperator):
 
     def __init__(self, A, b):
+        """
+        Proximal operator for solving a linear least squares system, Ax = b
+
+        Parameters
+        ----------
+        A : array_like
+            Sensing matrix (Ax = b)
+
+        b : array_like
+            Responses (Ax = b)
+
+        """
         self.A = A
         self.b = b
         self.P = A.T.dot(A)
@@ -122,7 +189,7 @@ class linsys(ProximalOperator):
 
         Minimizes the function:
 
-        .. math:: f(x) = (1/2)||Ax-b||_2^2 = (1/2)x^TA^TAx - (b^TA)x + b^Tb
+        .. math:: f(x) = (1/2)||Ax-b||_2^2
 
         Parameters
         ----------
@@ -131,17 +198,6 @@ class linsys(ProximalOperator):
 
         rho : float
             Momentum parameter for the proximal step (larger value -> stays closer to x0)
-
-        P : array_like
-            The symmetric matrix A^TA, where we are trying to approximate Ax=b
-
-        q : array_like
-            The vector A^Tb, where we are trying to approximate Ax=b
-
-        Returns
-        -------
-        theta : array_like
-            The parameter vector found after running the proximal update step
 
         """
         return np.linalg.solve(rho * np.eye(self.q.size) + self.P, rho * v + self.q)
@@ -153,11 +209,20 @@ class linsys(ProximalOperator):
 class squared_error(ProximalOperator):
 
     def __init__(self, x_obs):
+        """
+        Proximal operator for squared error (l2 or Fro. norm)
+
+        Parameters
+        ----------
+        x_obs : array_like
+            'Observed' array or matrix that you want to stay close to
+
+        """
         self.x_obs = x_obs.copy()
 
     def __call__(self, x0, rho):
         """
-        Proximal operator for the pairwise difference between two matrices (Frobenius norm)
+        Proximal operator for the sum of squared differences between two matrices
 
         Parameters
         ----------
@@ -166,14 +231,6 @@ class squared_error(ProximalOperator):
 
         rho : float
             Momentum parameter for the proximal step (larger value -> stays closer to x0)
-
-        x_obs : array_like
-            The true matrix that we want to approximate. The error between the parameters and this matrix is minimized.
-
-        Returns
-        -------
-        x0 : array_like
-            The parameter vector found after running the proximal update step
 
         """
         return (x0 + self.x_obs / rho) / (1 + 1 / rho)
@@ -211,6 +268,14 @@ class lbfgs(ProximalOperator):
 class tvd(ProximalOperator):
 
     def __init__(self, penalty):
+        """
+        Total variation denoising proximal operator
+
+        Parameters
+        ----------
+        penalty : float
+
+        """
         self.gamma = penalty
 
     def __call__(self, x0, rho):
@@ -226,14 +291,6 @@ class tvd(ProximalOperator):
 
         rho : float
             Momentum parameter for the proximal step (larger value -> stays closer to x0)
-
-        gamma : float
-            A constant that weights how strongly to enforce the constraint
-
-        Returns
-        -------
-        theta : array_like
-            The parameter vector found after running the proximal update step
 
         Raises
         ------

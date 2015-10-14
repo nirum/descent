@@ -13,27 +13,26 @@ __all__ = ['ProximalGradientDescent', 'AcceleratedProximalGradient', 'ProximalCo
 
 
 class ProximalGradientDescent(Optimizer):
+    """
+    Proximal gradient descent
+
+    Parameters
+    ----------
+    f_df : callable
+        Function that returns the objective and gradient
+
+    theta_init : array_like
+        Initial parameters
+
+    proxop : ProximalOperator
+        (e.g. from the proximal_operators module)
+
+    learning_rate : float, optional
+        (default: 0.001)
+
+    """
 
     def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
-        """
-        Proximal gradient descent
-
-        Parameters
-        ----------
-        f_df : callable
-            Function that returns the objective and gradient
-
-        theta_init : array_like
-            Initial parameters
-
-        proxop : ProximalOperator
-            (e.g. from the proximal_operators module)
-
-        learning_rate : float, optional
-            default: 0.001
-
-        """
-
         self.proxop = proxop
         self.lr = learning_rate
 
@@ -53,27 +52,26 @@ class ProximalGradientDescent(Optimizer):
 
 
 class AcceleratedProximalGradient(Optimizer):
+    """
+    Accelerated proximal gradient descent
+
+    Parameters
+    ----------
+    f_df : callable
+        Function that returns the objective and gradient
+
+    theta_init : array_like
+        Initial parameters
+
+    proxop : ProximalOperator
+        (e.g. from the proximal_operators module)
+
+    learning_rate : float, optional
+        (default: 0.001)
+
+    """
 
     def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
-        """
-        Accelerated proximal gradient descent
-
-        Parameters
-        ----------
-        f_df : callable
-            Function that returns the objective and gradient
-
-        theta_init : array_like
-            Initial parameters
-
-        proxop : ProximalOperator
-            (e.g. from the proximal_operators module)
-
-        learning_rate : float, optional
-            default: 0.001
-
-        """
-
         self.proxop = proxop
         self.lr = learning_rate
 
@@ -107,17 +105,23 @@ class AcceleratedProximalGradient(Optimizer):
 
 
 class ProximalConsensus(Optimizer):
+    """
+    Proximal Consensus (ADMM)
+
+    Parameters
+    ----------
+    theta_init : array_like
+        Initial parameters
+
+    tau : (float, float, float)
+        ADMM scheduling. The augmented Lagrangian quadratic penalty parameter,
+        rho, is initialized to tau[0]. Depending on the primal and dual residuals,
+        the parameter is increased by a factor of tau[1] or decreased by a factor
+        of tau[2] at every iteration. (See Boyd et. al. 2011 for details)
+
+    """
 
     def __init__(self, theta_init, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
-        """
-        Proximal Consensus (ADMM)
-
-        Parameters
-        ----------
-        theta_init : array_like
-            Initial parameters
-
-        """
 
         self.operators = []
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
