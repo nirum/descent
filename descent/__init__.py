@@ -26,4 +26,4 @@ from .gradient_algorithms import *
 from .proximal_algorithms import *
 from .utils import *
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
