@@ -63,7 +63,7 @@ class Optimizer(object):
         theta_prev = np.Inf
 
         # init display
-        if self.display:
+        if self.display is not None:
             self.display.start()
             display_batch_size = self.display.every
 
