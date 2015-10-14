@@ -38,9 +38,22 @@ class Optimizer(object):
         # default maxiter
         self.maxiter = 1000
 
+        # machine epsilon (currently unused)
+        self.eps = np.finfo(float).eps
+
+        # exit message (for display)
+        self.exit_message = None
+
         self.theta = deepcopy(theta_init)
 
-    def run(self, maxiter=1e3, obj_tol=-1, param_tol=-1):
+    def run(self, maxiter=1e3, tol=(1e-18, 1e-18, 1e-16)):
+
+        # reset exit message (for display)
+        self.exit_message = None
+
+        # tolerance
+        tol = namedtuple('tolerance', ['obj', 'param', 'grad'])(*tol)
+        print('tol: ' + str(tol))
 
         self.maxiter = int(maxiter)
         starting_iteration = len(self)
@@ -65,30 +78,35 @@ class Optimizer(object):
                 else:
                     grad = None
 
-                if len(self.runtimes) == 0:
-                    rt = 0.
-                else:
-                    rt = self.runtimes[-1]
+                # hack to get around the first iteration runtime
+                if ix >= 1:
 
-                # build the datum
-                d = Datum(k, obj, grad, self.restruct(theta), rt)
+                    # collect a bunch of information for the current iterate
+                    d = Datum(k, obj, grad, self.restruct(theta), self.runtimes[-1])
 
-                # farm out to callbacks
-                callback_func(d)
+                    # send out to callbacks
+                    callback_func(d)
 
-                # display/storage
-                if self.display is not None:
-                    self.display(d)
+                    # display/storage
+                    if self.display is not None:
+                        self.display(d)
 
-                if self.storage is not None:
-                    self.storage(d)
+                    if self.storage is not None:
+                        self.storage(d)
 
-                if np.abs(obj - obj_prev) <= obj_tol:
-                    print('{}: obj not changing!'.format(ix))
+
+                # tolerance
+                if grad is not None:
+                    if np.linalg.norm(destruct(grad), 2) <= (tol.grad * np.sqrt(theta.size)):
+                        self.exit_message = 'Stopped on interation {}. Scaled gradient norm: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(destruct(grad), 2))
+                        break
+
+                elif np.abs(obj - obj_prev) <= tol.obj:
+                    self.exit_message = 'Stopped on interation {}. Objective value not changing, |f(x^k) - f(x^{k+1})|: {}'.format(ix, np.abs(obj - obj_prev))
                     break
 
-                elif np.linalg.norm(theta - theta_prev) <= param_tol:
-                    print('{}: theta not changing! {}'.format(ix, np.linalg.norm(theta - theta_prev)))
+                elif np.linalg.norm(theta - theta_prev, 2) <= (tol.param * np.sqrt(theta.size)):
+                    self.exit_message = 'Stopped on interation {}. Parameters not changing, \sqrt(dim) * ||x^k - x^{k+1}||_2: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(theta - theta_prev, 2))
                     break
 
                 theta_prev = theta.copy()
@@ -97,7 +115,7 @@ class Optimizer(object):
         except KeyboardInterrupt:
             pass
 
-        self.display.cleanup(d, self.runtimes) if self.display else None
+        self.display.cleanup(d, self.runtimes, self.exit_message) if self.display else None
         self.theta = self.restruct(theta)
 
     def __len__(self):

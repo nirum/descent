@@ -4,7 +4,8 @@ Test suite for matrix approximation
 """
 
 import numpy as np
-from descent import ADMM, ProximalGradientDescent, AcceleratedProximalGradient, nucnorm
+from descent import ProximalConsensus, ProximalGradientDescent, AcceleratedProximalGradient
+from descent.proximal_operators import nucnorm
 
 
 def generate_lowrank_matrix(n=10, m=20, k=3, eta=0.05, seed=1234):
@@ -44,14 +45,14 @@ def test_lowrank_matrix_approx():
         assert err_ratio <= 0.5
 
     # proximal algorithm for low rank matrix approximation
-    opt = ADMM(Xobs)
+    opt = ProximalConsensus(Xobs)
     opt.add('squared_error', Xobs)
     opt.add('nucnorm', 0.2)
     opt.display = None
     opt.storage = None
     opt.run(maxiter=100)
 
-    # test ADMM
+    # test error
     test_error(opt.theta)
 
     # Proximal gradient descent and Accelerated proximal gradient descent

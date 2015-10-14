@@ -1,5 +1,5 @@
 """
-Proximal algorithms
+Parallel algorithms
 """
 
 from .main import Optimizer
@@ -9,108 +9,52 @@ import numpy as np
 from collections import deque, namedtuple, defaultdict
 from builtins import super
 
-__all__ = ['ProximalGradientDescent', 'AcceleratedProximalGradient', 'ProximalConsensus']
+__all__ = ['DistributedProximalConsensus']
 
 
-class ProximalGradientDescent(Optimizer):
+def farm(funcs, args, *additional_args):
+    """
+    Maps a bunch of arguments to a bunch of functions, and collects the results
 
-    def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
-        """
-        Proximal gradient descent
+    Parameters
+    ----------
+    funcs : iterable
+        List of functions
 
-        Parameters
-        ----------
-        f_df : callable
-            Function that returns the objective and gradient
+    args : iterable
+        List of arguments (must have the same size as the functions)
 
-        theta_init : array_like
-            Initial parameters
+    *additional_args : optional
+        Optional arguments passed along to each function call
 
-        proxop : ProximalOperator
-            (e.g. from the proximal_operators module)
+    Returns
+    -------
+    results : list
+        List containing the result of each function
 
-        learning_rate : float, optional
-            default: 0.001
+    """
 
-        """
+    try:
+        from concurrent.futures import ProcessPoolExecutor
 
-        self.proxop = proxop
-        self.lr = learning_rate
+        futures = list()
+        with ProcessPoolExecutor() as pool:
+            for func, arg in zip(funcs, args):
+                futures.append(pool.submit(func, arg, *additional_args))
 
-        # initializes objective and gradient
-        self.obj, self.gradient = wrap(f_df, theta_init)
-        super().__init__(theta_init)
+        return [f.result() for f in futures]
 
-    def __iter__(self):
-
-        xk = self.theta.copy().astype('float')
-
-        for k in range(self.maxiter):
-            with self as state:
-                grad = self.restruct(state.gradient(xk))
-                xk = state.proxop(xk - state.lr * grad, 1. / state.lr)
-                yield xk
+    except ImportError:
+        # print('Error: concurrent.futures module not found.')
+        # revert to sequential processing
+        return [func(arg, *additional_args) for func, arg in zip(funcs, args)]
 
 
-class AcceleratedProximalGradient(Optimizer):
-
-    def __init__(self, f_df, theta_init, proxop, learning_rate=1e-3):
-        """
-        Accelerated proximal gradient descent
-
-        Parameters
-        ----------
-        f_df : callable
-            Function that returns the objective and gradient
-
-        theta_init : array_like
-            Initial parameters
-
-        proxop : ProximalOperator
-            (e.g. from the proximal_operators module)
-
-        learning_rate : float, optional
-            default: 0.001
-
-        """
-
-        self.proxop = proxop
-        self.lr = learning_rate
-
-        self.obj, self.gradient = wrap(f_df, theta_init)
-        super().__init__(theta_init)
-
-    def __iter__(self):
-
-        xk = self.theta.copy().astype('float')
-        xprev = xk.copy()
-        yk = xk.copy()
-
-        for k in range(self.maxiter):
-            with self as state:
-
-                omega = k / (k + 3)
-
-                # update y's
-                yk = xk + omega * (xk - xprev)
-
-                # compute the gradient
-                grad = self.restruct(state.gradient(yk))
-
-                # update previous
-                xprev = xk
-
-                # compute the new iterate
-                xk = state.proxop(yk - state.lr * grad, 1. / state.lr)
-
-                yield xk
-
-
-class ProximalConsensus(Optimizer):
+class DistributedProximalConsensus(Optimizer):
 
     def __init__(self, theta_init, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
         """
-        Proximal Consensus (ADMM)
+        Consensus ADMM
 
         Parameters
         ----------
@@ -151,8 +95,9 @@ class ProximalConsensus(Optimizer):
                 theta_prev = theta_avg
 
                 # update each primal variable copy by taking a proximal step via each objective
-                for varidx, dual in enumerate(duals):
-                    primals[varidx] = self.operators[varidx](self.restruct(theta_prev-dual), rho).ravel()
+                # funcs, args = [self.operators[varidx] for varidx, dual in enumerate(duals)]
+                    # primals[varidx] = self.operators[varidx](self.restruct(theta_prev-dual), rho).ravel()
+                primals = [x.ravel() for x in farm(self.operators, (theta_prev - dual for dual in duals), rho)]
 
                 # average primal copies
                 theta_avg = np.mean(primals, axis=0)

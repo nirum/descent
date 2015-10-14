@@ -7,6 +7,7 @@ import tableprint as tp
 from .utils import datum, destruct
 from toolz import merge
 from numpy.linalg import norm
+import numpy as np
 
 defaults = {
     'every': 1,
@@ -14,7 +15,7 @@ defaults = {
     'obj': True,
     'gradnorm': False,
     'runtime': True,
-    'width': 15,
+    'width': 18,
     'spec': '5g'
 }
 
@@ -62,7 +63,7 @@ class Ascii(Display): # pragma no cover
             self.columns.append(lambda d: norm(destruct(d.grad)))
 
         if opts['runtime']:
-            self.column_names.append('Runtime')
+            self.column_names.append('Iteration runtime')
             self.columns.append(lambda d: tp.humantime(d.runtime))
 
         self.ncols = len(self.column_names)
@@ -86,9 +87,17 @@ class Ascii(Display): # pragma no cover
         if d.iteration % self.every == 0:
             print(tp.row(self._transform(d), self.width, format_spec=self.spec), flush=True)
 
-    def cleanup(self, d, runtimes):
+    def cleanup(self, d, runtimes, exit_message):
 
         print(self.hr)
         print(u'\u279b Final objective: {}'.format(d.obj))
         print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(runtimes))))
+        print(u'\u279b Per iteration runtime: {} +/- {}'.format(
+            tp.humantime(np.mean(runtimes)),
+            tp.humantime(np.std(runtimes)),
+        ))
+
+        if exit_message:
+            print(u'\u279b ' + exit_message)
+
         print(u'\u279b All done!\n')

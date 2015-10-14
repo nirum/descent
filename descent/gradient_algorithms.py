@@ -8,8 +8,7 @@ import numpy as np
 from collections import deque
 from builtins import super
 
-__all__ = ['GradientDescent', 'RMSProp', 'Adam', 'StochasticAverageGradient',
-           'adam', 'rmsprop', 'sgd', 'sag']
+__all__ = ['GradientDescent', 'RMSProp', 'Adam', 'StochasticAverageGradient']
 
 class GradientDescent(Optimizer):
 
@@ -205,9 +204,3 @@ class Adam(Optimizer):
                 xk -= state.lr * momentum_normalized / (state.epsilon + velocity_normalized)
 
                 yield xk
-
-# aliases
-sgd = GradientDescent
-adam = Adam
-sag = StochasticAverageGradient
-rmsprop = RMSProp

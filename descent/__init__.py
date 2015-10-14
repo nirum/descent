@@ -24,7 +24,6 @@ __all__ = [
 from .main import *
 from .gradient_algorithms import *
 from .proximal_algorithms import *
-from .proximal_operators import *
 from .utils import *
 
 __version__ = '0.0.7'
