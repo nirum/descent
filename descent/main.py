@@ -53,7 +53,6 @@ class Optimizer(object):
 
         # tolerance
         tol = namedtuple('tolerance', ['obj', 'param', 'grad'])(*tol)
-        print('tol: ' + str(tol))
 
         self.maxiter = int(maxiter)
         starting_iteration = len(self)
@@ -161,4 +160,4 @@ class Optimizer(object):
                '''.format(
                    self.__class__.__name__,
                    len(self),
-                   self.obj(self.theta))
+                   self.obj(destruct(self.theta)))
