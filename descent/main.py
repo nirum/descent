@@ -148,7 +148,7 @@ class Optimizer(object):
 
     def __str__(self): # pragma no cover
         return '{}\n{} iterations\nObjective: {}'.format(
-            self.__class__.__name__, len(self), self.obj(self.theta))
+            self.__class__.__name__, len(self), self.obj(destruct(self.theta)))
 
     def __repr__(self): # pragma no cover
         return str(self)
