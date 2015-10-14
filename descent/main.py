@@ -65,6 +65,10 @@ class Optimizer(object):
         # init display
         if self.display:
             self.display.start()
+            display_batch_size = self.display.every
+
+        else:
+            display_batch_size = 1
 
         try:
             for ix, theta in enumerate(self):
@@ -81,7 +85,7 @@ class Optimizer(object):
                 if ix >= 1:
 
                     # collect a bunch of information for the current iterate
-                    d = Datum(k, obj, grad, self.restruct(theta), self.runtimes[-1])
+                    d = Datum(k, obj, grad, self.restruct(theta), np.sum(self.runtimes[-display_batch_size:]))
 
                     # send out to callbacks
                     callback_func(d)
@@ -92,7 +96,6 @@ class Optimizer(object):
 
                     if self.storage is not None:
                         self.storage(d)
-
 
                 # tolerance
                 if grad is not None:
@@ -124,7 +127,8 @@ class Optimizer(object):
         return restruct(x, self.theta)
 
     def reset(self):
-        self.runtimes = [0]
+        self.runtimes = []
+        self.exit_message = None
 
     # because why not make each Optimizer a ContextManager
     # (used to wrap the per-iteration computation)

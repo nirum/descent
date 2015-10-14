@@ -15,7 +15,7 @@ defaults = {
     'obj': True,
     'gradnorm': False,
     'runtime': True,
-    'width': 18,
+    'width': 15,
     'spec': '5g'
 }
 
@@ -63,7 +63,7 @@ class Ascii(Display): # pragma no cover
             self.columns.append(lambda d: norm(destruct(d.grad)))
 
         if opts['runtime']:
-            self.column_names.append('Iteration runtime')
+            self.column_names.append('Runtime')
             self.columns.append(lambda d: tp.humantime(d.runtime))
 
         self.ncols = len(self.column_names)
