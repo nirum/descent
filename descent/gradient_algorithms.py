@@ -72,8 +72,6 @@ class NesterovAcceleratedGradient(Optimizer):
     """
     Nesterov's Accelerated Gradient Descent
 
-    See: https://blogs.princeton.edu/imabandit/2013/04/01/acceleratedgradientdescent/
-
     Parameters
     ----------
     f_df : function
@@ -103,21 +101,6 @@ class NesterovAcceleratedGradient(Optimizer):
         self.obj, self.gradient = wrap(f_df, theta_init)
         super().__init__(theta_init)
 
-        # initialize the sequence of lambdas
-        # used to store the sequence of lambdas
-        self.lambdas = {'prev': 0.0, 'current': 1.0, 'next': 0.}
-        self._update_lambdas()
-
-    def _update_lambdas(self):
-
-        # compute the next value of lambda in the sequence
-        newlambda = 0.5 * (1 + np.sqrt(1 + 4 * self.lambdas['current'] ** 2))
-
-        # shift all the values
-        self.lambdas['prev'] = self.lambdas['current']
-        self.lambdas['current'] = self.lambdas['next']
-        self.lambdas['next'] = newlambda
-
     def __iter__(self):
         """
         Initialize the generator
@@ -138,18 +121,9 @@ class NesterovAcceleratedGradient(Optimizer):
                 # compute the new value of y
                 ynext = xnext + (k / (k + 1)) * (xnext - xk)
 
-                # calculate gamma (the interpolation coefficient)
-                # gamma = (1 - state.lambdas['current']) / state.lambdas['next']
-
-                # update x (interpolation between current and future y's)
-                # xk = (1 - gamma) * ynext + gamma * yk
-
                 # update parameters
                 xk = xnext
                 yk = ynext
-
-                # update sequence of lambdas
-                # state._update_lambdas()
 
                 yield xk
 
