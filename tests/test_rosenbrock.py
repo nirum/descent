@@ -3,7 +3,7 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent import GradientDescent, RMSProp, Adam, StochasticAverageGradient
+from descent import GradientDescent, RMSProp, Adam, StochasticAverageGradient, NesterovAcceleratedGradient
 
 
 def rosenbrock(theta):
@@ -32,6 +32,7 @@ def test_rosen(tol=1e-2):
 
     # list of algorithms to test (and their parameters)
     algorithms = [(GradientDescent, {'learning_rate': 1e-3, 'momentum': 0.1}),
+                  (NesterovAcceleratedGradient, {'learning_rate': 1e-3}),
                   (RMSProp, {'learning_rate': 1e-3}),
                   (Adam, {'learning_rate': 1e-3}),
                   (StochasticAverageGradient, {'nterms': 2, 'learning_rate': 2e-3})]

@@ -5,10 +5,11 @@ First order gradient descent algorithms
 from .main import Optimizer
 from .utils import destruct, wrap
 import numpy as np
-from collections import deque
+from collections import deque, namedtuple
 from builtins import super
 
-__all__ = ['GradientDescent', 'RMSProp', 'Adam', 'StochasticAverageGradient']
+__all__ = ['GradientDescent', 'NesterovAcceleratedGradient', 'RMSProp', 'Adam',
+           'StochasticAverageGradient']
 
 class GradientDescent(Optimizer):
     """
@@ -54,7 +55,7 @@ class GradientDescent(Optimizer):
         for k in range(self.maxiter):
             with self as state:
 
-                # compute objective and gradient
+                # compute gradient
                 grad = state.gradient(xk)
 
                 # update velocity
@@ -63,6 +64,92 @@ class GradientDescent(Optimizer):
                 # update parameters
                 xk += vnext
                 vk = vnext
+
+                yield xk
+
+
+class NesterovAcceleratedGradient(Optimizer):
+    """
+    Nesterov's Accelerated Gradient Descent
+
+    See: https://blogs.princeton.edu/imabandit/2013/04/01/acceleratedgradientdescent/
+
+    Parameters
+    ----------
+    f_df : function
+        Objective and gradient function
+
+    theta_init : array_like
+        Initial parameters
+
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
+
+    momentum : float, optional
+        Momentum parameter (Default: 0)
+
+    decay : float, optional
+        Decay of the learning rate. Every iteration the learning rate decays
+        by a factor of 1/(decay+1), (Default: 0)
+
+    """
+
+    def __init__(self, f_df, theta_init, learning_rate=1e-3):
+
+        # store the learning rate
+        self.lr = learning_rate
+
+        # initializes objective and gradient
+        self.obj, self.gradient = wrap(f_df, theta_init)
+        super().__init__(theta_init)
+
+        # initialize the sequence of lambdas
+        # used to store the sequence of lambdas
+        self.lambdas = {'prev': 0.0, 'current': 1.0, 'next': 0.}
+        self._update_lambdas()
+
+    def _update_lambdas(self):
+
+        # compute the next value of lambda in the sequence
+        newlambda = 0.5 * (1 + np.sqrt(1 + 4 * self.lambdas['current'] ** 2))
+
+        # shift all the values
+        self.lambdas['prev'] = self.lambdas['current']
+        self.lambdas['current'] = self.lambdas['next']
+        self.lambdas['next'] = newlambda
+
+    def __iter__(self):
+        """
+        Initialize the generator
+        """
+
+        xk = destruct(self.theta).copy().astype('float')
+        yk = xk.copy()
+
+        for k in range(self.maxiter):
+            with self as state:
+
+                # compute gradient
+                grad = state.gradient(yk)
+
+                # compute the new value of x
+                xnext = yk - state.lr * grad
+
+                # compute the new value of y
+                ynext = xnext + (k / (k + 1)) * (xnext - xk)
+
+                # calculate gamma (the interpolation coefficient)
+                # gamma = (1 - state.lambdas['current']) / state.lambdas['next']
+
+                # update x (interpolation between current and future y's)
+                # xk = (1 - gamma) * ynext + gamma * yk
+
+                # update parameters
+                xk = xnext
+                yk = ynext
+
+                # update sequence of lambdas
+                # state._update_lambdas()
 
                 yield xk
 
