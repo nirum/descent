@@ -2,6 +2,7 @@
 Proximal algorithms
 """
 
+from __future__ import division
 from .main import Optimizer
 from .utils import destruct, wrap
 from .proximal_operators import _getproxop, ProximalOperator

@@ -3,6 +3,7 @@ Proximal operators / mappings
 
 """
 
+from __future__ import division
 import numpy as np
 from collections import Callable
 from functools import partial

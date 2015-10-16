@@ -2,6 +2,7 @@
 First order gradient descent algorithms
 """
 
+from __future__ import division
 from .main import Optimizer
 from .utils import destruct, wrap
 import numpy as np
