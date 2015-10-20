@@ -223,11 +223,8 @@ def destruct(x):
     Converts a list of numpy arrays to a single array
     """
 
-    # make sure the values are all numpy arrays
-    list(map(enforce(np.ndarray), x))
-
     # unravel each array, c
-    return pipe(x, map(np.ravel), concat, list, np.array)
+    return pipe(x, map(destruct), concat, list, np.array)
 
 
 @docstring(DESTRUCT_DOCSTR)
@@ -244,7 +241,9 @@ def destruct(x):
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, int)
 def restruct(x, ref):
+    """ Note: converts to floating point!! """
     return float(x)
+
 
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, float)
@@ -261,12 +260,13 @@ def restruct(x, ref):
     """
 
     idx = 0
-    d = ref.copy()
-    for k in sorted(ref):
-        d[k] = x[idx:(idx+ref[k].size)].reshape(ref[k].shape)
-        idx += ref[k].size
+    newdict = ref.copy()
+    for key in sorted(ref):
+        elem_size = destruct(ref[key]).size
+        newdict[key] = restruct(x[idx:(idx + elem_size)], ref[key])
+        idx += elem_size
 
-    return d
+    return newdict
 
 
 @docstring(RESTRUCT_DOCSTR)
@@ -298,15 +298,10 @@ def restruct(x, ref):
     """
 
     idx = 0
-    s = []
-    for si in ref:
-        s.append(x[idx:(idx+si.size)].reshape(si.shape))
-        idx += si.size
+    newlist = []
+    for elem in ref:
+        elem_size = destruct(elem).size
+        newlist.append(restruct(x[idx:(idx + elem_size)], elem))
+        idx += elem_size
 
-    return s
-
-
-@curry
-def enforce(typeclass, arg):
-    """Asserts that the input is of a given typeclass"""
-    assert type(arg) == typeclass, "Input must be of " + str(typeclass)
+    return newlist
