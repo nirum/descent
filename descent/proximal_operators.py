@@ -336,3 +336,17 @@ class smooth(ProximalOperator):
         # lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
         # TODO: add objective for this operator
         return np.nan
+
+
+class semidefinite_cone(ProximalOperator):
+
+    def __init__(self):
+        """
+        Projection onto the semidefinite cone
+        """
+        pass
+
+    def __call__(self, x0, rho):
+
+        U, V = np.linalg.eigh(x0)
+        return V.dot(np.diag(np.maximum(U, 0)).dot(V.T))

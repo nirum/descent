@@ -128,3 +128,19 @@ def test_lbfgs():
 
             # test objective
             assert np.allclose(op.objective(v), f_df(np.array(v))[0])
+
+
+@randomseed
+def test_sdc():
+
+    x = np.random.randn(10,5)
+    A = x.T.dot(x)
+
+    Aobs = A + 10. * np.random.randn(5,5)
+    Ahat = proxops.semidefinite_cone()(Aobs, 0.)
+
+    u0 = np.linalg.eigh(Aobs)[0]
+    u1 = np.linalg.eigh(Ahat)[0]
+
+    assert np.allclose(np.maximum(u0, 0), u1)
+    assert np.linalg.norm(Ahat - A) <= np.linalg.norm(Aobs - A)

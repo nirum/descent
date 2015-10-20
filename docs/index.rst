@@ -20,6 +20,7 @@ Contents:
 
    installation
    quickstart
+   proxops
    api
 
 
