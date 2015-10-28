@@ -16,7 +16,7 @@ except ImportError: # pragma no cover
     print("Package 'scipy' not found. L-BFGS and smooth proximal operators will not work.")
 
 __all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
-           'lbfgs', 'tvd', 'smooth', 'ProximalOperator']
+           'lbfgs', 'tvd', 'smooth', 'linear', 'ProximalOperator']
 
 
 def _getproxop(name, *args, **kwargs):
@@ -59,11 +59,13 @@ class ProximalOperator:
     def objective(theta):
         return np.nan
 
-    def apply(self, v, rho):
-        self.__call__(v, rho)
+    def apply(self, x0, rho):
+        self.__call__(x0, rho)
 
 
 class nucnorm(ProximalOperator):
+
+    __slots__ = 'penalty'
 
     def __init__(self, penalty):
         """
@@ -102,6 +104,8 @@ class nucnorm(ProximalOperator):
 
 class sparse(ProximalOperator):
 
+    __slots__ = 'penalty'
+
     def __init__(self, penalty):
         """
         Proximal operator for the l1-norm: soft thresholding
@@ -135,6 +139,9 @@ class sparse(ProximalOperator):
 
 
 class nonneg(ProximalOperator):
+
+    __slots__ = []
+
     def __init__(self):
         """
         Proximal operator for the indicator function over the
@@ -165,6 +172,8 @@ class nonneg(ProximalOperator):
 
 
 class linsys(ProximalOperator):
+
+    __slots__ = ['A', 'b', 'P', 'q']
 
     def __init__(self, A, b):
         """
@@ -209,6 +218,8 @@ class linsys(ProximalOperator):
 
 class squared_error(ProximalOperator):
 
+    __slots__ = 'x_obs'
+
     def __init__(self, x_obs):
         """
         Proximal operator for squared error (l2 or Fro. norm)
@@ -242,6 +253,8 @@ class squared_error(ProximalOperator):
 
 class lbfgs(ProximalOperator):
 
+    __slots__ = ['f_df', 'numiter']
+
     def __init__(self, f_df, numiter=20.):
         self.f_df = f_df
         self.numiter = numiter
@@ -268,6 +281,8 @@ class lbfgs(ProximalOperator):
 
 class tvd(ProximalOperator):
 
+    __slots__ = 'penalty'
+
     def __init__(self, penalty):
         """
         Total variation denoising proximal operator
@@ -277,7 +292,7 @@ class tvd(ProximalOperator):
         penalty : float
 
         """
-        self.gamma = penalty
+        self.penalty = penalty
 
     def __call__(self, x0, rho):
         """
@@ -305,10 +320,12 @@ class tvd(ProximalOperator):
             print('Error: scikit-image not found. TVD will not work.')
             return x0
 
-        return denoise_tv_bregman(x0, rho / self.gamma)
+        return denoise_tv_bregman(x0, rho / self.penalty)
 
 
 class smooth(ProximalOperator):
+
+    __slots__ = ['axis', 'penalty']
 
     def __init__(self, axis, penalty):
         """
@@ -317,7 +334,7 @@ class smooth(ProximalOperator):
         currently only accepts a matrix as input
         """
         self.axis = axis
-        self.gamma = penalty
+        self.penalty = penalty
 
 
     def __call__(self, x0, rho):
@@ -325,20 +342,26 @@ class smooth(ProximalOperator):
         # Apply Laplacian smoothing (l2 norm on the parameters multiplied by
         # the laplacian)
         n = x0.shape[self.axis]
-        lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
+        lap_op = spdiags([(2 + rho / self.penalty) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
 
-        x_out = np.rollaxis(spsolve(self.gamma * lap_op, rho * np.rollaxis(x0, self.axis, 0)), self.axis, 0)
+        x_out = np.rollaxis(spsolve(self.penalty * lap_op, rho * np.rollaxis(x0, self.axis, 0)), self.axis, 0)
 
         return x_out
 
     def objective(self, x):
         n = x.shape[self.axis]
-        # lap_op = spdiags([(2 + rho / self.gamma) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
+        # lap_op = spdiags([(2 + rho / self.penalty) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
         # TODO: add objective for this operator
         return np.nan
 
 
-class semidefinite_cone(ProximalOperator):
+class sdcone(ProximalOperator):
+    """
+    Projection onto the semi-definite cone
+
+    """
+
+    __slots__ = []
 
     def __init__(self):
         """
@@ -350,3 +373,72 @@ class semidefinite_cone(ProximalOperator):
 
         U, V = np.linalg.eigh(x0)
         return V.dot(np.diag(np.maximum(U, 0)).dot(V.T))
+
+
+class linear(ProximalOperator):
+    """
+    Proximal operator for a linear function
+
+    """
+    __slots__ = ['w']
+
+    def __init__(self, weights):
+        self.w = weights
+
+    def __call__(self, x0, rho):
+        return x0 - self.w / rho
+
+    def objective(self, theta):
+        return np.inner(theta.ravel(), self.w.ravel())
+
+
+class fantope(ProximalOperator):
+    """
+    Projection onto the fantope
+
+    TODO: add citation
+
+    """
+    __slots__ = ['d']
+
+    def __init__(self, dim):
+        self.d = dim
+
+    @staticmethod
+    def threshold(u):
+        return np.minimum(np.maximum(u, 0), 1)
+
+    def bisect(self, u):
+
+        assert np.all(u >= 0)
+
+        minval, maxval = u.min(), u.max()
+
+        theta = 0.5 * (maxval + minval)
+        thr_eigvals = self.threshold(u - theta)
+        constraint = np.sum(thr_eigvals)
+
+        while True:
+            if constraint < self.d:
+                maxval = theta
+            elif constraint > self.d:
+                minval = theta
+            else:
+                break
+
+            theta = 0.5 * (maxval + minval)
+            thr_eigvals = self.threshold(u - theta)
+            constraint = np.sum(thr_eigvals)
+
+        return thr_eigvals
+
+    def __call__(self, x0, rho):
+
+        U, V = np.linalg.eigh(x0)
+
+        thr_eigvals = self.bisect(U)
+
+        nz_inds = np.where(thr_eigvals > 0)[0]
+
+        # return np.linalg.multi_dot((u, np.diag(sthr), v))
+        return V.dot(np.diag(thr_eigvals)).dot(V.T)
