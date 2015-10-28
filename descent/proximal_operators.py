@@ -16,7 +16,7 @@ except ImportError: # pragma no cover
     print("Package 'scipy' not found. L-BFGS and smooth proximal operators will not work.")
 
 __all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
-           'lbfgs', 'tvd', 'smooth', 'linear', 'ProximalOperator']
+           'lbfgs', 'tvd', 'smooth', 'linear', 'fantope', 'ProximalOperator']
 
 
 def _getproxop(name, *args, **kwargs):
@@ -53,10 +53,10 @@ class ProximalOperator:
     Superclass for all proximal operators.
     """
 
-    def __call__(x0, rho):
+    def __call__(self, x0, rho):
         raise NotImplementedError
 
-    def objective(theta):
+    def objective(self, theta):
         return np.nan
 
     def apply(self, x0, rho):
@@ -64,8 +64,6 @@ class ProximalOperator:
 
 
 class nucnorm(ProximalOperator):
-
-    __slots__ = 'penalty'
 
     def __init__(self, penalty):
         """
@@ -104,8 +102,6 @@ class nucnorm(ProximalOperator):
 
 class sparse(ProximalOperator):
 
-    __slots__ = 'penalty'
-
     def __init__(self, penalty):
         """
         Proximal operator for the l1-norm: soft thresholding
@@ -140,8 +136,6 @@ class sparse(ProximalOperator):
 
 class nonneg(ProximalOperator):
 
-    __slots__ = []
-
     def __init__(self):
         """
         Proximal operator for the indicator function over the
@@ -172,8 +166,6 @@ class nonneg(ProximalOperator):
 
 
 class linsys(ProximalOperator):
-
-    __slots__ = ['A', 'b', 'P', 'q']
 
     def __init__(self, A, b):
         """
@@ -218,8 +210,6 @@ class linsys(ProximalOperator):
 
 class squared_error(ProximalOperator):
 
-    __slots__ = 'x_obs'
-
     def __init__(self, x_obs):
         """
         Proximal operator for squared error (l2 or Fro. norm)
@@ -253,8 +243,6 @@ class squared_error(ProximalOperator):
 
 class lbfgs(ProximalOperator):
 
-    __slots__ = ['f_df', 'numiter']
-
     def __init__(self, f_df, numiter=20.):
         self.f_df = f_df
         self.numiter = numiter
@@ -280,8 +268,6 @@ class lbfgs(ProximalOperator):
 
 
 class tvd(ProximalOperator):
-
-    __slots__ = 'penalty'
 
     def __init__(self, penalty):
         """
@@ -325,8 +311,6 @@ class tvd(ProximalOperator):
 
 class smooth(ProximalOperator):
 
-    __slots__ = ['axis', 'penalty']
-
     def __init__(self, axis, penalty):
         """
         Applies a smoothing operator along one dimension
@@ -361,8 +345,6 @@ class sdcone(ProximalOperator):
 
     """
 
-    __slots__ = []
-
     def __init__(self):
         """
         Projection onto the semidefinite cone
@@ -380,7 +362,6 @@ class linear(ProximalOperator):
     Proximal operator for a linear function
 
     """
-    __slots__ = ['w']
 
     def __init__(self, weights):
         self.w = weights
@@ -399,10 +380,10 @@ class fantope(ProximalOperator):
     TODO: add citation
 
     """
-    __slots__ = ['d']
 
-    def __init__(self, dim):
+    def __init__(self, dim, tol=1e-4):
         self.d = dim
+        self.tol = tol
 
     @staticmethod
     def threshold(u):
@@ -410,19 +391,32 @@ class fantope(ProximalOperator):
 
     def bisect(self, u):
 
-        assert np.all(u >= 0)
+        # assert np.all(u >= 0)
+        # u = np.minimum(u, 0)
 
-        minval, maxval = u.min(), u.max()
+        # print('==== sum(u) is {} ===='.format(u.sum()))
+
+        minval, maxval = np.maximum(u.min(), 0), np.maximum(u.max(), 20 * self.d)
 
         theta = 0.5 * (maxval + minval)
         thr_eigvals = self.threshold(u - theta)
         constraint = np.sum(thr_eigvals)
 
         while True:
-            if constraint < self.d:
+            # print('({}, {}) {}'.format(minval, maxval, constraint))
+            # import time
+            # time.sleep(0.1)
+
+            if np.abs(constraint - self.d) <= self.tol:
+                # print('Breaking!')
+                break
+
+            elif constraint < self.d:
                 maxval = theta
+
             elif constraint > self.d:
                 minval = theta
+
             else:
                 break
 
