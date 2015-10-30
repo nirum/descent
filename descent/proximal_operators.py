@@ -15,7 +15,7 @@ try:
 except ImportError: # pragma no cover
     print("Package 'scipy' not found. L-BFGS and smooth proximal operators will not work.")
 
-__all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error',
+__all__ = ['nucnorm', 'sparse', 'nonneg', 'linsys', 'squared_error', 'columns',
            'lbfgs', 'tvd', 'smooth', 'linear', 'fantope', 'ProximalOperator']
 
 
@@ -65,7 +65,7 @@ class ProximalOperator:
 
 class nucnorm(ProximalOperator):
 
-    def __init__(self, penalty):
+    def __init__(self, penalty, newshape=None):
         """
         Proximal operator for the nuclear norm penalty
 
@@ -76,6 +76,7 @@ class nucnorm(ProximalOperator):
 
         """
         self.penalty = penalty
+        self.newshape = newshape
 
     def __call__(self, x0, rho):
         """
@@ -90,14 +91,39 @@ class nucnorm(ProximalOperator):
             Quadratic penalty weight
 
         """
+        orig_shape = x0.shape
+
+        if self.newshape is not None:
+            x0 = x0.reshape(self.newshape)
+
         u, s, v = np.linalg.svd(x0, full_matrices=False)
         sthr = np.maximum(s - (self.penalty / float(rho)), 0)
         # return np.linalg.multi_dot((u, np.diag(sthr), v))
-        return u.dot(np.diag(sthr)).dot(v)
+        return (u.dot(np.diag(sthr)).dot(v)).reshape(orig_shape)
 
     def objective(self, theta):
         singular_values = np.linalg.svd(theta, full_matrices=False, compute_uv=False)
         return np.sum(singular_values)
+
+
+class columns(ProximalOperator):
+    """
+    Applies a proximal operator to the columns of a matrix
+
+    """
+
+    def __init__(self, proxop):
+
+        self.proxop = proxop
+
+    def __call__(self, x0, rho):
+
+        xnext = np.zeros_like(x0)
+
+        for ix in range(x0.shape[1]):
+            xnext[:,ix] = self.proxop(x0[:,ix], rho)
+
+        return xnext
 
 
 class sparse(ProximalOperator):
