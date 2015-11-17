@@ -19,6 +19,7 @@ __all__ = [
     'proximal_algorithms',
     'proximal_operators',
     'utils',
+    'algorithms'
     ]
 
 from .main import *

@@ -4,6 +4,7 @@ Main routines for the descent package
 
 import numpy as np
 import time
+from . import algorithms
 from .utils import wrap, destruct, restruct
 from collections import defaultdict, namedtuple
 from toolz.curried import juxt
@@ -20,7 +21,7 @@ __all__ = ['Optimizer']
 # for all optimization algorithms
 class Optimizer(object):
 
-    def __init__(self, theta_init):
+    def __init__(self, f_df, theta_init, algorithm):
         """
         Optimization base class
         """
@@ -44,7 +45,20 @@ class Optimizer(object):
         # exit message (for display)
         self.exit_message = None
 
-        self.theta = deepcopy(theta_init)
+        # get objective and gradient
+        self.obj, self.gradient = wrap(f_df, theta_init)
+
+        self.theta_init = theta_init
+
+        # initialize algorithm
+        if type(algorithm) is str:
+            self.algorithm = getattr(algorithms, algorithm)(deepcopy(destruct(theta_init)))
+        elif callable(algorithm):
+            self.algorithm = algorithm(deepcopy(theta_init))
+        else:
+            raise ValueError("Algorithm '" + str(algorithm) + "' must be a string or a function.")
+
+        self.theta = self.restruct(self.algorithm.send(None))
 
     def run(self, maxiter=1e3, tol=(1e-18, 1e-18, 1e-16)):
 
@@ -55,12 +69,13 @@ class Optimizer(object):
         tol = namedtuple('tolerance', ['obj', 'param', 'grad'])(*tol)
 
         self.maxiter = int(maxiter)
-        starting_iteration = len(self)
         callback_func = juxt(*self.callbacks)
 
         # store previous iterates
-        obj_prev = np.Inf
-        theta_prev = np.Inf
+        # obj_prev = np.Inf
+        # theta_prev = np.Inf
+
+        print('starting')
 
         # init display
         if self.display is not None:
@@ -71,60 +86,57 @@ class Optimizer(object):
             display_batch_size = 1
 
         try:
-            for ix, theta in enumerate(self):
+            for k in range(len(self), len(self) + self.maxiter):
 
-                k = starting_iteration + ix
-                obj = self.obj(theta)
+                obj = self.obj(self.theta)
+                grad = self.gradient(self.theta)
 
-                if self.gradient:
-                    grad = self.restruct(self.gradient(theta))
-                else:
-                    grad = None
+                with self as state:
+                    state.theta = state.restruct(state.algorithm.send(grad))
 
                 # hack to get around the first iteration runtime
-                if ix >= 1:
+                # if k >= 1:
 
-                    # collect a bunch of information for the current iterate
-                    d = Datum(k, obj, grad, self.restruct(theta), np.sum(self.runtimes[-display_batch_size:]))
+                # collect a bunch of information for the current iterate
+                d = Datum(k, obj, grad, self.theta, np.sum(self.runtimes[-display_batch_size:]))
 
-                    # send out to callbacks
-                    callback_func(d)
+                # send out to callbacks
+                callback_func(d)
 
-                    # display/storage
-                    if self.display is not None:
-                        self.display(d)
+                # display/storage
+                if self.display is not None:
+                    self.display(d)
 
-                    if self.storage is not None:
-                        self.storage(d)
+                if self.storage is not None:
+                    self.storage(d)
 
                 # tolerance
-                if grad is not None:
-                    if np.linalg.norm(destruct(grad), 2) <= (tol.grad * np.sqrt(theta.size)):
-                        self.exit_message = 'Stopped on interation {}. Scaled gradient norm: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(destruct(grad), 2))
-                        break
+                # if grad is not None:
+                    # if np.linalg.norm(destruct(grad), 2) <= (tol.grad * np.sqrt(theta.size)):
+                        # self.exit_message = 'Stopped on interation {}. Scaled gradient norm: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(destruct(grad), 2))
+                        # break
 
-                elif np.abs(obj - obj_prev) <= tol.obj:
-                    self.exit_message = 'Stopped on interation {}. Objective value not changing, |f(x^k) - f(x^{k+1})|: {}'.format(ix, np.abs(obj - obj_prev))
-                    break
+                # elif np.abs(obj - obj_prev) <= tol.obj:
+                    # self.exit_message = 'Stopped on interation {}. Objective value not changing, |f(x^k) - f(x^{k+1})|: {}'.format(ix, np.abs(obj - obj_prev))
+                    # break
 
-                elif np.linalg.norm(theta - theta_prev, 2) <= (tol.param * np.sqrt(theta.size)):
-                    self.exit_message = 'Stopped on interation {}. Parameters not changing, \sqrt(dim) * ||x^k - x^{k+1}||_2: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(theta - theta_prev, 2))
-                    break
+                # elif np.linalg.norm(theta - theta_prev, 2) <= (tol.param * np.sqrt(theta.size)):
+                    # self.exit_message = 'Stopped on interation {}. Parameters not changing, \sqrt(dim) * ||x^k - x^{k+1}||_2: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(theta - theta_prev, 2))
+                    # break
 
-                theta_prev = theta.copy()
-                obj_prev = obj
+                # theta_prev = theta.copy()
+                # obj_prev = obj
 
         except KeyboardInterrupt:
             pass
 
         self.display.cleanup(d, self.runtimes, self.exit_message) if self.display else None
-        self.theta = self.restruct(theta)
 
     def __len__(self):
         return len(self.runtimes)
 
     def restruct(self, x):
-        return restruct(x, self.theta)
+        return restruct(x, self.theta_init)
 
     def reset(self):
         self.runtimes = []
