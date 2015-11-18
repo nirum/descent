@@ -12,7 +12,159 @@ import numpy as np
 from collections import deque, namedtuple
 from builtins import super
 
-__all__ = ['adam']
+__all__ = ['sgd', 'nag', 'rmsprop', 'sag', 'adam']
+
+
+def sgd(x0, learning_rate=1e-3, momentum=0., decay=0.):
+    """
+    Stochastic Gradient Descent (with momentum)
+
+    Parameters
+    ----------
+    theta_init : array_like
+        Initial parameters
+
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
+
+    momentum : float, optional
+        Momentum parameter (Default: 0)
+
+    decay : float, optional
+        Decay of the learning rate. Every iteration the learning rate decays
+        by a factor of 1/(decay+1), (Default: 0)
+
+    """
+
+    xk = x0.copy()
+    vk = np.zeros_like(xk)
+    k = 0.
+
+    while True:
+
+        k += 1.
+
+        # compute gradient
+        grad = yield xk
+
+        # update velocity
+        vnext = momentum * vk - learning_rate * grad / (decay * k + 1.)
+
+        # update parameters
+        xk += vnext
+        vk = vnext
+
+
+def nag(x0, learning_rate=1e-3):
+    """
+    Nesterov's Accelerated Gradient Descent
+
+    Parameters
+    ----------
+    theta_init : array_like
+        Initial parameters
+
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
+
+    """
+
+    xk = x0.copy()
+    yk = x0.copy()
+    k = 0.
+
+    while True:
+
+        k += 1.
+
+        # compute gradient
+        grad = yield yk
+
+        # compute the new value of x
+        xnext = yk - learning_rate * grad
+
+        # compute the new value of y
+        ynext = xnext + (k / (k + 1)) * (xnext - xk)
+
+        # update parameters
+        xk = xnext
+        yk = ynext
+
+        yield xk
+
+
+def rmsprop(x0, learning_rate=1e-3, damping=0.1, decay=0.9):
+    """
+    RMSProp
+
+    Parameters
+    ----------
+    f_df : function
+
+    theta_init : array_like
+
+    learning_rate : float, optional
+        Learning rate (Default: 1e-3)
+
+    damping : float, optional
+        Damping term (Default: 0)
+
+    decay : float, optional
+        Decay of the learning rate (Default: 0)
+
+    """
+
+    xk = x0.copy()
+    rms = np.zeros_like(xk)
+    k = 0.
+
+    while True:
+
+        k += 1.
+
+        # compute objective and gradient
+        grad = yield xk
+
+        # update RMS
+        rms = decay * rms + (1-decay) * grad**2
+
+        # gradient descent update
+        xk -= learning_rate * grad / (damping + np.sqrt(rms))
+
+
+def sag(x0, nterms=10, learning_rate=1e-3):
+    """
+    Stochastic Average Gradient (SAG)
+
+    Parameters
+    ----------
+    theta_init : array_like
+        Initial parameters
+
+    nterms : int, optional
+        Number of gradient evaluations to use in the average (Default: 10)
+
+    learning_rate : float, optional
+        (Default: 1e-3)
+
+    """
+
+    xk = x0.copy()
+    gradients = deque([], nterms)
+    k = 0.
+
+    while True:
+
+        k += 1.
+
+        # compute the objective and gradient
+        grad = yield xk
+
+        # push the new gradient onto the deque, update the average
+        gradients.append(grad)
+
+        # update
+        xk -= learning_rate * np.mean(gradients, axis=0)
 
 
 def adam(x0, learning_rate=1e-3, beta=(0.9, 0.999), epsilon=1e-8):

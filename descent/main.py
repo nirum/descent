@@ -12,18 +12,31 @@ from .display import Ascii
 from .storage import List
 from builtins import super
 from copy import deepcopy
+from types import GeneratorType
 
 Datum = namedtuple('Datum', ['iteration', 'obj', 'grad', 'params', 'runtime'])
 
 __all__ = ['Optimizer']
 
+
 # this is the awesome master Optimizer superclass, used to house properties
 # for all optimization algorithms
 class Optimizer(object):
 
-    def __init__(self, f_df, theta_init, algorithm):
+    def __init__(self, f_df, theta_init, algorithm, **kwargs):
         """
         Optimization base class
+
+        Parameters
+        ----------
+        f_df : function
+
+        theta_init : array, dict, or list
+
+        algorithm : string
+
+        **kwargs : dict
+
         """
 
         # initialize storage of runtimes
@@ -51,12 +64,10 @@ class Optimizer(object):
         self.theta_init = theta_init
 
         # initialize algorithm
-        if type(algorithm) is str:
-            self.algorithm = getattr(algorithms, algorithm)(deepcopy(destruct(theta_init)))
-        elif callable(algorithm):
-            self.algorithm = algorithm(deepcopy(theta_init))
-        else:
-            raise ValueError("Algorithm '" + str(algorithm) + "' must be a string or a function.")
+        try:
+            self.algorithm = getattr(algorithms, algorithm)(deepcopy(destruct(theta_init)), **kwargs)
+        except:
+            raise ValueError("Algorithm '" + str(algorithm) + "' not valid.")
 
         self.theta = self.restruct(self.algorithm.send(None))
 
@@ -64,18 +75,14 @@ class Optimizer(object):
 
         # reset exit message (for display)
         self.exit_message = None
+        theta_prev = np.Inf
+        obj_prev = np.Inf
 
         # tolerance
         tol = namedtuple('tolerance', ['obj', 'param', 'grad'])(*tol)
 
         self.maxiter = int(maxiter)
         callback_func = juxt(*self.callbacks)
-
-        # store previous iterates
-        # obj_prev = np.Inf
-        # theta_prev = np.Inf
-
-        print('starting')
 
         # init display
         if self.display is not None:
@@ -88,14 +95,17 @@ class Optimizer(object):
         try:
             for k in range(len(self), len(self) + self.maxiter):
 
+                # store objective and gradient computation time
+                tstart = time.time()
                 obj = self.obj(self.theta)
                 grad = self.gradient(self.theta)
+                obj_runtime = time.time() - tstart
 
-                with self as state:
-                    state.theta = state.restruct(state.algorithm.send(grad))
+                tstart = time.time()
+                self.theta = self.restruct(self.algorithm.send(grad))
+                alg_runtime = time.time() - tstart
 
-                # hack to get around the first iteration runtime
-                # if k >= 1:
+                self.runtimes.append(obj_runtime + alg_runtime)
 
                 # collect a bunch of information for the current iterate
                 d = Datum(k, obj, grad, self.theta, np.sum(self.runtimes[-display_batch_size:]))
@@ -111,21 +121,22 @@ class Optimizer(object):
                     self.storage(d)
 
                 # tolerance
-                # if grad is not None:
-                    # if np.linalg.norm(destruct(grad), 2) <= (tol.grad * np.sqrt(theta.size)):
-                        # self.exit_message = 'Stopped on interation {}. Scaled gradient norm: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(destruct(grad), 2))
-                        # break
+                grad_vec = destruct(grad)
+                theta_vec = destruct(self.theta)
+                if np.linalg.norm(grad_vec, 2) <= (tol.grad * np.sqrt(grad_vec.size)):
+                    self.exit_message = 'Stopped on interation {}. Scaled gradient norm: {}'.format(k, np.sqrt(grad_vec.size) * np.linalg.norm(grad_vec, 2))
+                    break
 
-                # elif np.abs(obj - obj_prev) <= tol.obj:
-                    # self.exit_message = 'Stopped on interation {}. Objective value not changing, |f(x^k) - f(x^{k+1})|: {}'.format(ix, np.abs(obj - obj_prev))
-                    # break
+                elif np.abs(obj - obj_prev) <= tol.obj:
+                    self.exit_message = 'Stopped on interation {}. Objective value not changing, |f_current - f_prev|: {}'.format(k, np.abs(obj - obj_prev))
+                    break
 
-                # elif np.linalg.norm(theta - theta_prev, 2) <= (tol.param * np.sqrt(theta.size)):
-                    # self.exit_message = 'Stopped on interation {}. Parameters not changing, \sqrt(dim) * ||x^k - x^{k+1}||_2: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(theta - theta_prev, 2))
-                    # break
+                elif np.linalg.norm(theta_vec - theta_prev, 2) <= (tol.param * np.sqrt(theta_vec.size)):
+                    self.exit_message = 'Stopped on interation {}. Parameters not changing, \sqrt(dim) * ||x_current - x_prev||_2: {}'.format(k, np.sqrt(theta_vec.size) * np.linalg.norm(theta_vec - theta_prev, 2))
+                    break
 
-                # theta_prev = theta.copy()
-                # obj_prev = obj
+                theta_prev = theta_vec.copy()
+                obj_prev = obj
 
         except KeyboardInterrupt:
             pass
@@ -142,26 +153,6 @@ class Optimizer(object):
         self.runtimes = []
         self.exit_message = None
 
-    # because why not make each Optimizer a ContextManager
-    # (used to wrap the per-iteration computation)
-    def __enter__(self):
-        """
-        Enter
-        """
-
-        # time the running time of the inner loop computation
-        self.iteration_time = time.time()
-
-        return self
-
-    def __exit__(self, *args):
-        """
-        exit(self, type, value, traceback)
-        """
-
-        runtime = time.time() - self.iteration_time
-        self.runtimes.append(runtime)
-
     def __str__(self): # pragma no cover
         return '{}\n{} iterations\nObjective: {}'.format(
             self.__class__.__name__, len(self), self.obj(destruct(self.theta)))
@@ -173,7 +164,6 @@ class Optimizer(object):
         return '''
                <h2>{}</h2>
                <p>{} iterations, objective: {}</p>
-               '''.format(
-                   self.__class__.__name__,
-                   len(self),
-                   self.obj(destruct(self.theta)))
+               '''.format(self.__class__.__name__,
+                          len(self),
+                          self.obj(destruct(self.theta)))
