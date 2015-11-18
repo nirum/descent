@@ -23,7 +23,7 @@ __all__ = ['Optimizer']
 # for all optimization algorithms
 class Optimizer(object):
 
-    def __init__(self, f_df, theta_init, algorithm, **kwargs):
+    def __init__(self, f_df, theta_init, algorithm, *args, **kwargs):
         """
         Optimization base class
 
@@ -61,15 +61,21 @@ class Optimizer(object):
         # get objective and gradient
         self.obj, self.gradient = wrap(f_df, theta_init)
 
+        self.ravel = algorithm not in ['apg', 'pgd']
         self.theta_init = theta_init
+
+        if self.ravel:
+            theta_vec = destruct(theta_init).copy()
+        else:
+            theta_vec = theta_init.copy()
 
         # initialize algorithm
         try:
-            self.algorithm = getattr(algorithms, algorithm)(deepcopy(destruct(theta_init)), **kwargs)
+            self.algorithm = getattr(algorithms, algorithm)(theta_vec, *args, **kwargs)
         except:
             raise ValueError("Algorithm '" + str(algorithm) + "' not valid.")
 
-        self.theta = self.restruct(self.algorithm.send(None))
+        self.theta = self.algorithm.send(None)
 
     def run(self, maxiter=1e3, tol=(1e-18, 1e-18, 1e-16)):
 
@@ -97,12 +103,21 @@ class Optimizer(object):
 
                 # store objective and gradient computation time
                 tstart = time.time()
-                obj = self.obj(self.theta)
-                grad = self.gradient(self.theta)
+
+                if self.ravel:
+                    theta_vec = destruct(self.theta)
+                else:
+                    theta_vec = self.theta
+
+                obj = self.obj(theta_vec)
+                grad = self.gradient(theta_vec)
                 obj_runtime = time.time() - tstart
 
                 tstart = time.time()
-                self.theta = self.restruct(self.algorithm.send(grad))
+                if self.ravel:
+                    self.theta = self.restruct(self.algorithm.send(grad))
+                else:
+                    self.theta = self.algorithm.send(self.restruct(grad))
                 alg_runtime = time.time() - tstart
 
                 self.runtimes.append(obj_runtime + alg_runtime)

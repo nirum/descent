@@ -2,7 +2,7 @@
 Test proximal operators
 """
 
-from descent import proximal_operators as proxops
+from descent import proxops
 import numpy as np
 
 

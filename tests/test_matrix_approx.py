@@ -4,8 +4,8 @@ Test suite for matrix approximation
 """
 
 import numpy as np
-from descent import ProximalConsensus, ProximalGradientDescent, AcceleratedProximalGradient
-from descent.proximal_operators import nucnorm
+from descent import Optimizer
+from descent.proxops import nucnorm
 
 
 def generate_lowrank_matrix(n=10, m=20, k=3, eta=0.05, seed=1234):
@@ -44,19 +44,8 @@ def test_lowrank_matrix_approx():
         err_ratio = test_err / naive_err
         assert err_ratio <= 0.5
 
-    # proximal algorithm for low rank matrix approximation
-    opt = ProximalConsensus(Xobs)
-    opt.add('squared_error', Xobs)
-    opt.add('nucnorm', 0.2)
-    opt.display = None
-    opt.storage = None
-    opt.run(maxiter=100)
-
-    # test error
-    test_error(opt.theta)
-
     # Proximal gradient descent and Accelerated proximal gradient descent
-    for algorithm in [ProximalGradientDescent, AcceleratedProximalGradient]:
+    for algorithm in ['pgd', 'apg']:
 
         # objective
         def f_df(X):
@@ -64,11 +53,8 @@ def test_lowrank_matrix_approx():
             obj = 0.5 * np.linalg.norm(grad.ravel()) ** 2
             return obj, grad
 
-        # sparsity penalty
-        proxop = nucnorm(0.2)
-
         # optimizer
-        opt = algorithm(f_df, Xobs, proxop, learning_rate=0.005)
+        opt = Optimizer(f_df, Xobs, algorithm, nucnorm(0.2), learning_rate=0.005)
         opt.display = None
         opt.storage = None
         opt.run(maxiter=5000)

@@ -90,8 +90,6 @@ def nag(x0, learning_rate=1e-3):
         xk = xnext
         yk = ynext
 
-        yield xk
-
 
 def rmsprop(x0, learning_rate=1e-3, damping=0.1, decay=0.9):
     """
@@ -197,3 +195,71 @@ def adam(x0, learning_rate=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
 
         # gradient descent update
         xk -= learning_rate * momentum_normalized / (epsilon + velocity_normalized)
+
+
+def pgd(x0, proxop, learning_rate=1e-3):
+    """
+    Proximal gradient descent
+
+    Parameters
+    ----------
+    x0 : array_like
+        Initial parameters
+
+    proxop : ProximalOperator
+        (e.g. from the proximal_operators module)
+
+    learning_rate : float, optional
+        (default: 0.001)
+
+    """
+
+    xk = x0.copy()
+    k = 0.
+
+    while True:
+
+        k += 1.
+        grad = yield xk
+        xk = proxop(xk - learning_rate * grad, 1. / learning_rate)
+
+
+def apg(x0, proxop, learning_rate=1e-3):
+    """
+    Accelerated Proximal Gradient
+
+    Parameters
+    ----------
+    x0 : array_like
+        Initial parameters
+
+    proxop : ProximalOperator
+        (e.g. from the proximal_operators module)
+
+    learning_rate : float, optional
+        (default: 0.001)
+
+    """
+
+    xk = x0.copy()
+    xprev = x0.copy()
+    yk = x0.copy()
+    k = 0.
+
+    while True:
+
+        k += 1.
+
+        omega = k / (k + 3.)
+
+        # update y's
+        yk = xk + omega * (xk - xprev)
+
+        # compute the gradient
+        grad = yield yk
+
+        # update previous
+        xprev = xk
+
+        # compute the new iterate
+        xk = proxop(yk - learning_rate * grad, 1. / learning_rate)

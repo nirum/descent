@@ -3,8 +3,9 @@ Test optimization of a quadratic function
 """
 
 import numpy as np
-from descent import GradientDescent
+from descent import Optimizer
 from descent.utils import wrap
+from descent.algorithms import sgd
 
 
 def test_fixedpoint():
@@ -12,13 +13,15 @@ def test_fixedpoint():
     Test that the minimum of a quadratic is a fixed point
     """
 
-    def f_df(x):
-        return 0.5 * x.T.dot(x), x
+    def grad(x):
+        return x
 
     xstar = np.array([0., 0.])
-    gen = GradientDescent(f_df, xstar).__iter__()
+    coro = sgd(xstar)
+    xinit = coro.send(None)
+    xnext = coro.send(grad(xinit))
 
-    assert np.allclose(next(gen), xstar)
+    assert np.allclose(xnext, xstar)
 
 
 def test_quadratic_bowl():
@@ -37,7 +40,7 @@ def test_quadratic_bowl():
         grad = [theta[0]-theta_true[0], theta[1]-theta_true[1]]
         return np.sum(obj), grad
 
-    opt = GradientDescent(f_df, theta_init, learning_rate=1e-2)
+    opt = Optimizer(f_df, theta_init, 'sgd', learning_rate=1e-2)
     opt.display = None
     opt.run(maxiter=1e3)
 

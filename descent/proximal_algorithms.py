@@ -186,7 +186,4 @@ class ProximalConsensus(Optimizer):
                     self.converged = True
                     raise StopIteration("Converged")
 
-                # store primals
-                self.primals = primals
-
                 yield theta_avg
