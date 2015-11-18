@@ -3,7 +3,7 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-from descent import GradientDescent, RMSProp, Adam, StochasticAverageGradient, NesterovAcceleratedGradient
+from descent import Optimizer
 
 
 def rosenbrock(theta):
@@ -31,17 +31,17 @@ def test_rosen(tol=1e-2):
     assert np.all(rosenbrock(xstar)[1] == 0)
 
     # list of algorithms to test (and their parameters)
-    algorithms = [(GradientDescent, {'learning_rate': 1e-3, 'momentum': 0.1}),
-                  (NesterovAcceleratedGradient, {'learning_rate': 1e-3}),
-                  (RMSProp, {'learning_rate': 1e-3}),
-                  (Adam, {'learning_rate': 1e-3}),
-                  (StochasticAverageGradient, {'nterms': 2, 'learning_rate': 2e-3})]
+    algorithms = [('sgd', {'learning_rate': 1e-3, 'momentum': 0.1}),
+                  ('nag', {'learning_rate': 1e-3}),
+                  ('rmsprop', {'learning_rate': 1e-3}),
+                  ('adam', {'learning_rate': 1e-3}),
+                  ('sag', {'nterms': 2, 'learning_rate': 2e-3})]
 
     # loop over algorithms
     for algorithm, kwargs in algorithms:
 
         # initialize
-        optimizer = algorithm(rosenbrock, np.zeros(2), **kwargs)
+        optimizer = Optimizer(rosenbrock, np.zeros(2), algorithm, **kwargs)
         optimizer.display = None
         optimizer.storage = None
 
