@@ -1,5 +1,5 @@
 """
-Main routines for the descent package
+Optimizer loops
 """
 
 import numpy as np
@@ -21,7 +21,7 @@ __all__ = ['Optimizer']
 
 # this is the awesome master Optimizer superclass, used to house properties
 # for all optimization algorithms
-class Optimizer(object):
+class GradientOptimizer(object):
 
     def __init__(self, f_df, theta_init, algorithm, *args, **kwargs):
         """
@@ -182,3 +182,6 @@ class Optimizer(object):
                '''.format(self.__class__.__name__,
                           len(self),
                           self.obj(destruct(self.theta)))
+
+
+# class ADMM(object):
