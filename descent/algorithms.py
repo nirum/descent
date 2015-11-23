@@ -7,26 +7,26 @@ the coroutine, and it spits out the next iterate of the algorithm.
 """
 
 from __future__ import division
-from asyncio import coroutine
+from .utils import coroutine
 import numpy as np
 from collections import deque
 
-__all__ = ['sgd', 'nag', 'rmsprop', 'sag', 'adam', 'pgd', 'apg']
+__all__ = ['sgd', 'nag', 'rmsprop', 'sag', 'adam']
 
 @coroutine
 def sgd(lr=1e-3, momentum=0., decay=0.):
 
     # initialize with the first iterate
     xk = yield
-    vk = np.zeros_like(x0)
+    vk = np.zeros_like(xk)
     k = 0.
 
     while True:
 
         k += 1.
         gradient = yield xk
-        vnext = mom * vk - lr * gradient / (decay * k + 1.)
-        xk += lr * gradient
+        vnext = momentum * vk - lr * gradient / (decay * k + 1.)
+        xk += vnext
         vk = vnext
 
 
@@ -134,7 +134,7 @@ def sag(nterms=10, lr=1e-3):
         gradient = yield xk
 
         # push the new gradient onto the deque, update the average
-        gradients.append(grad)
+        gradients.append(gradient)
 
         # update
         xk -= lr * np.mean(gradients, axis=0)
@@ -160,7 +160,7 @@ def adam(lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
         gradient = yield xk
 
         # update momentum
-        momentum = b1 * momentum + (1 - b1) * grad
+        momentum = b1 * momentum + (1 - b1) * gradient
 
         # update velocity
         velocity = b2 * velocity + (1 - b2) * (gradient ** 2)
@@ -171,73 +171,3 @@ def adam(lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
 
         # gradient descent update
         xk -= lr * momentum_normalized / (epsilon + velocity_normalized)
-
-
-@coroutine
-def pgd(proxop, lr=1e-3):
-    """
-    Proximal gradient descent
-
-    Parameters
-    ----------
-    x0 : array_like
-        Initial parameters
-
-    proxop : ProximalOperator
-        (e.g. from the proximal_operators module)
-
-    lr : float, optional
-        (default: 0.001)
-
-    """
-
-    xk = yield
-    k = 0.
-
-    while True:
-
-        k += 1.
-        gradient = yield xk
-        xk = proxop(xk - lr * grad, 1. / lr)
-
-
-@coroutine
-def apg(proxop, lr=1e-3):
-    """
-    Accelerated Proximal Gradient
-
-    Parameters
-    ----------
-    x0 : array_like
-        Initial parameters
-
-    proxop : ProximalOperator
-        (e.g. from the proximal_operators module)
-
-    lr : float, optional
-        (default: 0.001)
-
-    """
-
-    xk = yield
-    xprev = xk.copy()
-    yk = xk.copy()
-    k = 0.
-
-    while True:
-
-        k += 1.
-
-        omega = k / (k + 3.)
-
-        # update y's
-        yk = xk + omega * (xk - xprev)
-
-        # compute the gradient
-        gradient = yield yk
-
-        # update previous
-        xprev = xk
-
-        # compute the new iterate
-        xk = proxop(yk - lr * gradient, 1. / lr)

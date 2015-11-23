@@ -4,7 +4,7 @@ Proximal operators / mappings
 """
 
 from __future__ import division
-from utils import proxify, coroutine
+from .utils import proxify, coroutine
 import numpy as np
 
 try:
@@ -95,7 +95,7 @@ def squared_error(x, rho, x_obs):
         Observed array or matrix that you want to stay close to
 
     """
-    return = (x + x_obs / rho) / (1. + 1. / rho)
+    return (x + x_obs / rho) / (1. + 1. / rho)
 
 
 @proxify
