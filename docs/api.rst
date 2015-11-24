@@ -2,8 +2,8 @@
 API Reference
 =============
 
-Main optimization loop
-----------------------
+Main optimization loops
+-----------------------
 
 .. automodule:: descent.main
     :members:
@@ -13,15 +13,7 @@ Main optimization loop
 Gradient algorithms
 -------------------
 
-.. automodule:: descent.gradient_algorithms
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Proximal algorithms
--------------------
-
-.. automodule:: descent.proximal_algorithms
+.. automodule:: descent.algorithms
     :members:
     :undoc-members:
     :show-inheritance:
@@ -29,7 +21,23 @@ Proximal algorithms
 Proximal operators
 ------------------
 
-.. automodule:: descent.proximal_operators
+.. automodule:: descent.proxops
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+I/O Callbacks
+-------------
+
+.. automodule:: descent.io
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Connectors
+----------
+
+.. automodule:: descent.connectors
     :members:
     :undoc-members:
     :show-inheritance:
@@ -38,14 +46,6 @@ Utilities
 ---------
 
 .. automodule:: descent.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: descent
     :members:
     :undoc-members:
     :show-inheritance:

@@ -24,7 +24,7 @@ You can also install from source by grabbing the code from GitHub:
 Dependencies
 ------------
 
-Descent works on Python 3.3-3.5, and Python 2.7. It has only been tested on CPython (not tested on PyPy yet!).
+Descent works on Python 3.3-3.5. It has only been tested on CPython (not tested on PyPy yet!).
 
 In addition, descent requires the following packages:
 
@@ -32,7 +32,6 @@ In addition, descent requires the following packages:
 - ``toolz``
 - ``multipledispatch``
 - ``tableprint``
-- ``future`` (for python 2.7 support)
 
 And the following are optional (necessary for some features):
 
