@@ -64,7 +64,7 @@ class GradientDescent(Optimizer):
         f_df_coro = make_coroutine(f_df)()
 
         if projection is None:
-            proj_coro = join(concat(0.), proxops.identity())
+            projection = join(concat(0.), proxops.identity())
 
         self.pipeline = [f_df_coro,
                          saveall(('objective', 'gradient'), self.__dict__),
@@ -72,7 +72,7 @@ class GradientDescent(Optimizer):
                          destruct_coro(),
                          optimizer,
                          restruct_coro(theta_init),
-                         proj_coro,
+                         projection,
                          ]
 
         super().__init__(theta_init)

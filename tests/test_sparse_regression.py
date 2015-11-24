@@ -4,7 +4,9 @@ Test suite for sparse regression
 """
 
 import numpy as np
-from descent import Optimizer
+import descent
+from descent import GradientDescent
+from descent.connectors import join, concat
 from descent.proxops import sparse
 
 
@@ -48,7 +50,7 @@ def test_sparse_regression():
         assert err_ratio <= 0.01
 
     # Proximal gradient descent and Accelerated proximal gradient descent
-    for algorithm in ['pgd', 'apg']:
+    for algorithm in ['sgd', 'nag']:
 
         # objective
         def f_df(x):
@@ -58,9 +60,10 @@ def test_sparse_regression():
             return obj, grad
 
         # optimizer
-        opt = Optimizer(f_df, xls, algorithm, sparse(1.), learning_rate=0.005)
-        opt.display = None
-        opt.storage = None
+        alg = getattr(descent.algorithms, algorithm)(lr=5e-3)
+        proj = join(concat(0.1), sparse(1.0))
+        opt = GradientDescent(xls, f_df, alg, projection=proj)
+        opt.callbacks = []
         opt.run(maxiter=5000)
 
         # test

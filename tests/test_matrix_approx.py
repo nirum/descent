@@ -4,7 +4,9 @@ Test suite for matrix approximation
 """
 
 import numpy as np
-from descent import Optimizer
+import descent
+from descent import GradientDescent
+from descent.connectors import join, concat
 from descent.proxops import nucnorm
 
 
@@ -45,7 +47,7 @@ def test_lowrank_matrix_approx():
         assert err_ratio <= 0.5
 
     # Proximal gradient descent and Accelerated proximal gradient descent
-    for algorithm in ['pgd', 'apg']:
+    for algorithm in ['sgd', 'nag']:
 
         # objective
         def f_df(X):
@@ -54,9 +56,10 @@ def test_lowrank_matrix_approx():
             return obj, grad
 
         # optimizer
-        opt = Optimizer(f_df, Xobs, algorithm, nucnorm(0.2), learning_rate=0.005)
-        opt.display = None
-        opt.storage = None
+        alg = getattr(descent.algorithms, algorithm)(lr=5e-3)
+        proj = join(concat(0.1), nucnorm(0.2))
+        opt = GradientDescent(Xobs, f_df, alg, projection=proj)
+        opt.callbacks = []
         opt.run(maxiter=5000)
 
         # test
