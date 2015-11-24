@@ -4,8 +4,10 @@ Test suite for sparse regression
 """
 
 import numpy as np
-from descent import ProximalConsensus, ProximalGradientDescent, AcceleratedProximalGradient
-from descent.proximal_operators import sparse
+import descent
+from descent import GradientDescent
+from descent.connectors import join, concat
+from descent.proxops import sparse
 
 
 def generate_sparse_system(n=100, m=50, p=0.1, eta=0.05, seed=1234):
@@ -47,19 +49,8 @@ def test_sparse_regression():
         err_ratio = test_err / naive_err
         assert err_ratio <= 0.01
 
-    # ProximalConsensus
-    opt = ProximalConsensus(xls)
-    opt.add('linsys', A=A, b=y)
-    opt.add('sparse', 1.)
-    opt.display = None
-    opt.storage = None
-    opt.run(maxiter=100)
-
-    # test error
-    test_error(opt.theta)
-
     # Proximal gradient descent and Accelerated proximal gradient descent
-    for algorithm in [ProximalGradientDescent, AcceleratedProximalGradient]:
+    for algorithm in ['sgd', 'nag']:
 
         # objective
         def f_df(x):
@@ -68,13 +59,11 @@ def test_sparse_regression():
             grad = A.T.dot(err)
             return obj, grad
 
-        # sparsity penalty
-        proxop = sparse(1.)
-
         # optimizer
-        opt = algorithm(f_df, xls, proxop, learning_rate=0.005)
-        opt.display = None
-        opt.storage = None
+        alg = getattr(descent.algorithms, algorithm)(lr=5e-3)
+        proj = join(concat(0.1), sparse(1.0))
+        opt = GradientDescent(xls, f_df, alg, projection=proj)
+        opt.callbacks = []
         opt.run(maxiter=5000)
 
         # test

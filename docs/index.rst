@@ -7,7 +7,7 @@
 Descent: optimization tools in python
 =====================================
 
-`descent`_ is a library for optimization.
+`descent`_ is a library for building optimization pipelines.
 
 .. note:: Descent is under active development. Please refer to these pages or the Github repository for the latest info.
 
@@ -19,7 +19,6 @@ Contents:
    :maxdepth: 2
 
    installation
-   quickstart
    proxops
    api
 

@@ -7,13 +7,57 @@ from collections import OrderedDict, namedtuple
 from multipledispatch import dispatch
 from functools import wraps
 
-__all__ = ['check_grad', 'destruct', 'restruct', 'minibatchify']
-
 DESTRUCT_DOCSTR = """Deconstructs the input into a 1-D numpy array"""
 RESTRUCT_DOCSTR = """Reshapes the input into the type of the second argument"""
 
-# data type that is being passed around per iteration
-datum = namedtuple('Datum', ['iteration', 'obj', 'grad', 'params', 'runtime'])
+__all__ = ['proxify', 'coroutine', 'check_grad', 'destruct', 'restruct',
+           'destruct_coro', 'restruct_coro']
+
+
+def proxify(func):
+
+    @wraps(func)
+    @coroutine
+    def proxop(*args, **kwargs):
+        x, rho = yield
+        while True:
+            y = func(x, rho, *args, **kwargs)
+            x, rho = yield y
+    return proxop
+
+
+def coroutine(func):
+    """
+    Coroutine decorator
+
+    Initializes the coroutine and automatically advances to the first yield
+
+    """
+
+    @wraps(func)
+    def start(*args,**kwargs):
+        cr = func(*args,**kwargs)
+        cr.send(None)
+        return cr
+
+    return start
+
+
+def make_coroutine(func):
+    """
+    Makes a callable function a coroutine
+
+    """
+
+    @wraps(func)
+    @coroutine
+    def coro(*args, **kwargs):
+        x = yield
+        while True:
+            y = func(x, *args, **kwargs)
+            x = yield y
+
+    return coro
 
 
 def wrap(f_df, xref, size=1):
@@ -98,33 +142,6 @@ def lrucache(func, size):
     return wrapper
 
 
-def minibatchify(gen):
-    """
-    Takes an objective fun. and a data generator and returns an noisy oracle
-
-    Parameters
-    ----------
-    gen : generator
-        Generates data that is passed to an objective function
-
-    Returns
-    -------
-    decorator : function
-        A function decorator that wraps an objective function & gradient
-
-    """
-
-    def decorate(f_df):
-
-        @wraps(f_df)
-        def wrapper(theta):
-            return f_df(theta, next(gen))
-
-        return wrapper
-
-    return decorate
-
-
 def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
     """
     Compares the numerical gradient to the analytic gradient
@@ -179,28 +196,49 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         out.flush()
 
 
+
+@coroutine
+def destruct_coro():
+    """
+    Coroutine for destructing a parameters data structure into a flattened
+    numpy array
+
+    """
+
+    x = yield
+    while True:
+        x_vec = destruct(x)
+        x = yield x_vec
+
+
+@coroutine
+def restruct_coro(xref):
+    """
+    Coroutine for restructing a parameters data structure from a flattened
+    numpy array into an object with the same structure as xref
+
+    """
+    x_vec = yield
+    while True:
+        x = restruct(x_vec, xref)
+        x_vec = yield x
+
+
 @docstring(DESTRUCT_DOCSTR)
 @dispatch(int)
 def destruct(x):
-    """Convert an int to a numpy array"""
     return destruct(float(x))
 
 
 @docstring(DESTRUCT_DOCSTR)
 @dispatch(float)
 def destruct(x):
-    """Convert a float to a numpy array"""
     return np.array([x])
 
 
 @docstring(DESTRUCT_DOCSTR)
 @dispatch(dict)
 def destruct(x):
-    """
-    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
-    Converts a dictionary whose values are numpy arrays to a single array
-    """
-
     # take values by sorted keys
     return destruct([x[k] for k in sorted(x)])
 
@@ -208,21 +246,12 @@ def destruct(x):
 @docstring(DESTRUCT_DOCSTR)
 @dispatch(tuple)
 def destruct(x):
-    """
-    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
-    Converts a tuple of numpy arrays to a single array
-    """
     return destruct(list(x))
 
 
 @docstring(DESTRUCT_DOCSTR)
 @dispatch(list)
 def destruct(x):
-    """
-    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
-    Converts a list of numpy arrays to a single array
-    """
-
     # unravel each array, c
     return pipe(x, map(destruct), concat, list, np.array)
 
@@ -230,18 +259,12 @@ def destruct(x):
 @docstring(DESTRUCT_DOCSTR)
 @dispatch(np.ndarray)
 def destruct(x):
-    """
-    Deconstructs a data structure into a 1-D np.ndarray (via multiple dispatch)
-    Converts an N-D numpy array to a 1-D array
-    """
-
     return x.ravel()
 
 
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, int)
 def restruct(x, ref):
-    """ Note: converts to floating point!! """
     return float(x)
 
 
@@ -254,11 +277,6 @@ def restruct(x, ref):
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, dict)
 def restruct(x, ref):
-    """
-    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
-    Converts an unraveled array to a dictionary
-    """
-
     idx = 0
     newdict = ref.copy()
     for key in sorted(ref):
@@ -272,31 +290,18 @@ def restruct(x, ref):
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, np.ndarray)
 def restruct(x, ref):
-    """
-    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
-    Converts an unraveled array to an N-D array
-    """
     return x.reshape(ref.shape)
 
 
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, tuple)
 def restruct(x, ref):
-    """
-    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
-    Converts an unraveled array to an tuple
-    """
     return tuple(restruct(x, list(ref)))
 
 
 @docstring(RESTRUCT_DOCSTR)
 @dispatch(np.ndarray, list)
 def restruct(x, ref):
-    """
-    Reconstructs a data structure from a 1-D np.ndarray (via multiple dispatch)
-    Converts an unraveled array to a list of numpy arrays
-    """
-
     idx = 0
     newlist = []
     for elem in ref:

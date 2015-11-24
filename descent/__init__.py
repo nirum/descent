@@ -4,26 +4,24 @@ Descent
 
 A Python package for performing first-order optimization
 
-Modules
--------
-algorithms      - Various gradient based optimization algorithms
-utils           - Useful utilities for trasforming parameter data structures
-
 For more information, see the accompanying README.md
 
 """
 
 __all__ = [
-    'main',
-    'gradient_algorithms',
-    'proximal_algorithms',
-    'proximal_operators',
+    'algorithms',
+    'connectors',
+    'proxops',
     'utils',
+    'io',
+    'main',
     ]
 
-from .main import *
-from .gradient_algorithms import *
-from .proximal_algorithms import *
+from .algorithms import *
+from .connectors import *
+from .proxops import *
 from .utils import *
+from .io import *
+from .main import *
 
-__version__ = '0.0.12'
+__version__ = '0.1.0'

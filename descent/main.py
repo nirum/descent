@@ -1,167 +1,85 @@
-"""
-Main routines for the descent package
-"""
-
-import numpy as np
-import time
-from .utils import wrap, destruct, restruct
-from collections import defaultdict, namedtuple
-from toolz.curried import juxt
-from .display import Ascii
-from .storage import List
-from builtins import super
+from .connectors import run, select, concat, pipe, broadcast, saveall, save, join
+from .utils import wrap, make_coroutine, destruct_coro, restruct_coro, destruct
+from .io import printer, store
+from . import algorithms
+from . import proxops
 from copy import deepcopy
+from itertools import count
+import numpy as np
 
-Datum = namedtuple('Datum', ['iteration', 'obj', 'grad', 'params', 'runtime'])
 
-__all__ = ['Optimizer']
-
-# this is the awesome master Optimizer superclass, used to house properties
-# for all optimization algorithms
-class Optimizer(object):
+class Optimizer:
 
     def __init__(self, theta_init):
-        """
-        Optimization base class
-        """
-
-        # initialize storage of runtimes
-        self.runtimes = []
-
-        # display and storage
-        self.display = Ascii()
-        self.storage = List()
-
-        # custom callbacks
-        self.callbacks = []
-
-        # default maxiter
-        self.maxiter = 1000
-
-        # machine epsilon (currently unused)
-        self.eps = np.finfo(float).eps
-
-        # exit message (for display)
-        self.exit_message = None
 
         self.theta = deepcopy(theta_init)
+        self.iteration = 0
 
-    def run(self, maxiter=1e3, tol=(1e-18, 1e-18, 1e-16)):
+        # default callbacks
+        self.callbacks = [printer('iteration', 'objective'),
+                            store('iteration', 'objective')]
 
-        # reset exit message (for display)
-        self.exit_message = None
+    def run(self, maxiter=None):
 
-        # tolerance
-        tol = namedtuple('tolerance', ['obj', 'param', 'grad'])(*tol)
-
-        self.maxiter = int(maxiter)
-        starting_iteration = len(self)
-        callback_func = juxt(*self.callbacks)
-
-        # store previous iterates
-        obj_prev = np.Inf
-        theta_prev = np.Inf
-
-        # init display
-        if self.display is not None:
-            self.display.start()
-            display_batch_size = self.display.every
-
-        else:
-            display_batch_size = 1
+        maxiter = np.inf if maxiter is None else (maxiter + self.iteration)
+        self.cleanup = False
 
         try:
-            for ix, theta in enumerate(self):
+            for k in count(start=self.iteration):
 
-                k = starting_iteration + ix
-                obj = self.obj(theta)
+                # increment the iteration
+                self.iteration = k
 
-                if self.gradient:
-                    grad = self.restruct(self.gradient(theta))
-                else:
-                    grad = None
+                # get the new iterate of the parameters by passing them through
+                # the pipeline
+                self.theta = pipe(self.theta, self.pipeline, log=False)
 
-                # hack to get around the first iteration runtime
-                if ix >= 1:
+                # broadcast metadata to any callbacks
+                self._callback()
 
-                    # collect a bunch of information for the current iterate
-                    d = Datum(k, obj, grad, self.restruct(theta), np.sum(self.runtimes[-display_batch_size:]))
-
-                    # send out to callbacks
-                    callback_func(d)
-
-                    # display/storage
-                    if self.display is not None:
-                        self.display(d)
-
-                    if self.storage is not None:
-                        self.storage(d)
-
-                # tolerance
-                if grad is not None:
-                    if np.linalg.norm(destruct(grad), 2) <= (tol.grad * np.sqrt(theta.size)):
-                        self.exit_message = 'Stopped on interation {}. Scaled gradient norm: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(destruct(grad), 2))
-                        break
-
-                elif np.abs(obj - obj_prev) <= tol.obj:
-                    self.exit_message = 'Stopped on interation {}. Objective value not changing, |f(x^k) - f(x^{k+1})|: {}'.format(ix, np.abs(obj - obj_prev))
+                # check for convergence
+                if k >= maxiter:
                     break
-
-                elif np.linalg.norm(theta - theta_prev, 2) <= (tol.param * np.sqrt(theta.size)):
-                    self.exit_message = 'Stopped on interation {}. Parameters not changing, \sqrt(dim) * ||x^k - x^{k+1}||_2: {}'.format(ix, np.sqrt(theta.size) * np.linalg.norm(theta - theta_prev, 2))
-                    break
-
-                theta_prev = theta.copy()
-                obj_prev = obj
 
         except KeyboardInterrupt:
             pass
 
-        self.display.cleanup(d, self.runtimes, self.exit_message) if self.display else None
-        self.theta = self.restruct(theta)
+        # cleanup
+        self.cleanup = True
+        self._callback()
 
-    def __len__(self):
-        return len(self.runtimes)
+    def _callback(self):
+        results = broadcast(self.__dict__, self.callbacks)
 
-    def restruct(self, x):
-        return restruct(x, self.theta)
+        if self.cleanup:
+            tmp = {cb.__name__: res for cb, res in zip(self.callbacks, results) if res is not None}
+            self.__dict__.update(tmp)
 
-    def reset(self):
-        self.runtimes = []
-        self.exit_message = None
 
-    # because why not make each Optimizer a ContextManager
-    # (used to wrap the per-iteration computation)
-    def __enter__(self):
-        """
-        Enter
-        """
+class GradientDescent(Optimizer):
 
-        # time the running time of the inner loop computation
-        self.iteration_time = time.time()
+    def __init__(self, theta_init, f_df, optimizer, projection=None):
 
-        return self
+        optimizer.send(destruct(theta_init))
+        f_df_coro = make_coroutine(f_df)()
 
-    def __exit__(self, *args):
-        """
-        exit(self, type, value, traceback)
-        """
+        if projection is None:
+            projection = join(concat(0.), proxops.identity())
 
-        runtime = time.time() - self.iteration_time
-        self.runtimes.append(runtime)
+        self.pipeline = [f_df_coro,
+                         saveall(('objective', 'gradient'), self.__dict__),
+                         select(1),
+                         destruct_coro(),
+                         optimizer,
+                         restruct_coro(theta_init),
+                         projection,
+                         ]
 
-    def __str__(self): # pragma no cover
-        return '{}\n{} iterations\nObjective: {}'.format(
-            self.__class__.__name__, len(self), self.obj(destruct(self.theta)))
+        super().__init__(theta_init)
 
-    def __repr__(self): # pragma no cover
-        return str(self)
+class Consensus(Optimizer):
 
-    def _repr_html_(self): # pragma no cover
-        return '''
-               <h2>{}</h2>
-               <p>{} iterations, objective: {}</p>
-               '''.format(
-                   self.__class__.__name__,
-                   len(self),
-                   self.obj(destruct(self.theta)))
+    def __init__(self, theta_init, operators=None):
+
+        self.operators = operators
+        super().__init__(theta_init)
