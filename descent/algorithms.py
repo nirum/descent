@@ -13,6 +13,7 @@ from collections import deque
 
 __all__ = ['sgd', 'nag', 'rmsprop', 'sag', 'adam']
 
+
 @coroutine
 def sgd(lr=1e-3, momentum=0., decay=0.):
 

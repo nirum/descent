@@ -56,6 +56,7 @@ def make_coroutine(func):
         while True:
             y = func(x, *args, **kwargs)
             x = yield y
+
     return coro
 
 

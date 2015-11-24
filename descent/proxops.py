@@ -20,8 +20,12 @@ except ImportError:
     print('Error: scikit-image not found. TVD will not work.')
 
 __all__ = ['nucnorm', 'sparse', 'clip', 'linsys', 'squared_error',
-           'lbfgs', 'tvd', 'smooth', 'linear', 'fantope']
+           'lbfgs', 'tvd', 'smooth', 'linear', 'fantope', 'identity']
 
+
+@proxify
+def identity(x, rho):
+    return x
 
 @proxify
 def nucnorm(x, rho, penalty):

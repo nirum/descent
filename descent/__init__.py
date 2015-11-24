@@ -14,7 +14,7 @@ __all__ = [
     'proxops',
     'utils',
     'io',
-    'examples',
+    'main',
     ]
 
 from .algorithms import *
@@ -22,6 +22,6 @@ from .connectors import *
 from .proxops import *
 from .utils import *
 from .io import *
-from .examples import *
+from .main import *
 
 __version__ = '0.1.0'
