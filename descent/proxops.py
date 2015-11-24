@@ -63,7 +63,7 @@ def clip(x, rho, value=0):
 
 
 @coroutine
-def linsys(x, rho, A, b):
+def linsys(A, b):
     """
     Proximal operator for solving a linear least squares system, Ax = b
 
@@ -107,7 +107,7 @@ def lbfgs(x, rho, f_df, maxiter=20):
 
     def f_df_augmented(theta):
         f, df = f_df(theta)
-        obj = f + (rho / 2.) * np.linalg.norm(theta.ravel() - x.ravel()) ** 2
+        obj = f + (rho / 2.) * np.linalg.norm(theta - x) ** 2
         grad = df + rho * (theta - x)
         return obj, grad
 

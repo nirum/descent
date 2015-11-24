@@ -34,7 +34,7 @@ def test_nucnorm():
 
     nn = lambda A: np.linalg.svd(A, compute_uv=False).sum()
 
-    assert np.abs(nn(X) - nn(op(X, rho)) - pen / rho) <= tol
+    assert np.abs(nn(X) - nn(op.send((X, rho))) - pen / rho) <= tol
 
 
 def test_sparse():
@@ -48,22 +48,18 @@ def test_sparse():
 
     op = proxops.sparse(pen)
 
-    assert np.allclose(op(v, rho), x)
+    assert np.allclose(op.send((v, rho)), x)
 
 
 def test_nonneg():
 
-    op = proxops.nonneg()
+    op = proxops.clip(value=0.)
 
     v = np.array([-2., 0.54, -0.2, 24.])
     x = np.array([0., 0.54, 0., 24.])
 
     # test the proximal map (projection onto the non-negative orthant)
-    assert np.allclose(op(v, 1.), x)
-
-    # test the value of the objective
-    assert op.objective(v) == np.Inf
-    assert op.objective(x) == 0
+    assert np.allclose(op.send((v, 1.)), x)
 
 
 @randomseed
@@ -75,8 +71,8 @@ def test_linsys():
 
     op = proxops.linsys(A, y)
 
-    assert np.allclose(op(x, 1.), x)
-    assert np.allclose(op(np.zeros(x.size), 0.), x)
+    assert np.allclose(op.send((x, 1.)), x)
+    assert np.allclose(op.send((np.zeros(x.size), 0.)), x)
 
 
 def test_squared_error():
@@ -86,9 +82,9 @@ def test_squared_error():
 
     op = proxops.squared_error(xobs)
 
-    assert np.allclose(op(np.zeros(5), 1.), np.array([-1., -0.5, 0., 0.5, 1.]))
-    assert np.allclose(op(xobs, 10.), xobs)
-    assert np.linalg.norm(op(np.zeros(5), 1e-6) - xobs) <= tol
+    assert np.allclose(op.send((np.zeros(5), 1.)), np.array([-1., -0.5, 0., 0.5, 1.]))
+    assert np.allclose(op.send((xobs, 10.)), xobs)
+    assert np.linalg.norm(op.send((np.zeros(5), 1e-6)) - xobs) <= tol
 
 
 @randomseed
@@ -99,7 +95,7 @@ def test_smooth():
     x_obs = x_true + np.random.randn(x_true.size) * 0.2
 
     # smooth
-    x_smooth = proxops.smooth(axis=0, penalty=10)(x_obs, 1)
+    x_smooth = proxops.smooth(axis=0, penalty=10).send((x_obs, 1))
 
     assert np.linalg.norm(x_true - x_smooth) < np.linalg.norm(x_true - x_obs)
 
@@ -124,10 +120,7 @@ def test_lbfgs():
         for v in [0., 0.5, 1., 2., 10.]:
 
             # test mapping
-            assert np.allclose(op(v, rho), np.array([rho * v / (1 + rho)]))
-
-            # test objective
-            assert np.allclose(op.objective(v), f_df(np.array(v))[0])
+            assert np.allclose(op.send((v, rho)), np.array([rho * v / (1 + rho)]))
 
 
 @randomseed
@@ -137,7 +130,7 @@ def test_sdc():
     A = x.T.dot(x)
 
     Aobs = A + 10. * np.random.randn(5,5)
-    Ahat = proxops.sdcone()(Aobs, 0.)
+    Ahat = proxops.sdcone().send((Aobs, 0.))
 
     u0 = np.linalg.eigh(Aobs)[0]
     u1 = np.linalg.eigh(Ahat)[0]
