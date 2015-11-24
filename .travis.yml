@@ -8,6 +8,7 @@ python:
 install:
   - travis_retry pip install -r requirements-dev.txt
   - travis_retry python setup.py install
+  - travis_retry pip install -U numpy
 
 # command to run tests
 script:
