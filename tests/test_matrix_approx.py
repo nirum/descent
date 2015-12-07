@@ -5,7 +5,7 @@ Test suite for matrix approximation
 
 import numpy as np
 import descent
-from descent import Optimizer
+from descent import GradientDescent
 from descent.proxops import nucnorm
 
 
@@ -55,7 +55,7 @@ def test_lowrank_matrix_approx():
             return obj, grad
 
         # optimizer
-        opt = Optimizer(Xobs, f_df, algorithm, {'lr': 5e-3}, proxop=nucnorm(0.2), rho=1.0)
+        opt = GradientDescent(Xobs, f_df, algorithm, {'lr': 5e-3}, proxop=nucnorm(0.2), rho=1.0)
         opt.callbacks = []
         opt.run(maxiter=5000)
 

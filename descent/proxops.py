@@ -35,6 +35,7 @@ def proxify(func):
 
     class ProxOp(ProximalOperatorBaseClass):
 
+        @wraps(func)
         def __init__(self, *args, **kwargs):
             """
             Initializes a proximal operator

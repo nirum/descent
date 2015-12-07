@@ -3,7 +3,7 @@ Test optimization of a quadratic function
 """
 
 import numpy as np
-from descent import Optimizer
+from descent import GradientDescent
 from descent.utils import wrap
 from descent.algorithms import sgd
 
@@ -40,7 +40,7 @@ def test_quadratic_bowl():
         grad = [theta[0]-theta_true[0], theta[1]-theta_true[1]]
         return np.sum(obj), grad
 
-    opt = Optimizer(theta_init, f_df, sgd, {'lr': 1e-2})
+    opt = GradientDescent(theta_init, f_df, sgd, {'lr': 1e-2})
     opt.run(maxiter=1e3)
 
     for theta in zip(opt.theta, theta_true):
