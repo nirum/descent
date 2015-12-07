@@ -4,7 +4,7 @@ Test optimization of the rosenbrock function
 
 import numpy as np
 import descent
-from descent import GradientDescent
+from descent import Optimizer
 
 
 def rosenbrock(theta):
@@ -39,13 +39,11 @@ def test_rosen(tol=1e-2):
                   ('sag', {'nterms': 2, 'lr': 2e-3})]
 
     # loop over algorithms
-    for algorithm, kwargs in algorithms:
+    for algorithm, options in algorithms:
 
         # initialize
-        alg = getattr(descent.algorithms, algorithm)(**kwargs)
-        optimizer = GradientDescent(np.zeros(2), rosenbrock, alg)
-        optimizer.callbacks = []
+        opt = Optimizer(np.zeros(2), rosenbrock, algorithm, options)
 
         # run the optimization algorithm
-        optimizer.run(maxiter=1e4)
-        assert np.linalg.norm(optimizer.theta - xstar) <= tol
+        opt.run(maxiter=1e4)
+        assert np.linalg.norm(opt.theta - xstar) <= tol

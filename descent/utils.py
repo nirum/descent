@@ -10,54 +10,7 @@ from functools import wraps
 DESTRUCT_DOCSTR = """Deconstructs the input into a 1-D numpy array"""
 RESTRUCT_DOCSTR = """Reshapes the input into the type of the second argument"""
 
-__all__ = ['proxify', 'coroutine', 'check_grad', 'destruct', 'restruct',
-           'destruct_coro', 'restruct_coro']
-
-
-def proxify(func):
-
-    @wraps(func)
-    @coroutine
-    def proxop(*args, **kwargs):
-        x, rho = yield
-        while True:
-            y = func(x, rho, *args, **kwargs)
-            x, rho = yield y
-    return proxop
-
-
-def coroutine(func):
-    """
-    Coroutine decorator
-
-    Initializes the coroutine and automatically advances to the first yield
-
-    """
-
-    @wraps(func)
-    def start(*args,**kwargs):
-        cr = func(*args,**kwargs)
-        cr.send(None)
-        return cr
-
-    return start
-
-
-def make_coroutine(func):
-    """
-    Makes a callable function a coroutine
-
-    """
-
-    @wraps(func)
-    @coroutine
-    def coro(*args, **kwargs):
-        x = yield
-        while True:
-            y = func(x, *args, **kwargs)
-            x = yield y
-
-    return coro
+__all__ = ['check_grad', 'destruct', 'restruct', 'wrap']
 
 
 def wrap(f_df, xref, size=1):
@@ -195,33 +148,6 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
                    .format(df_approx, df_analytic, error, errstr)))
         out.flush()
 
-
-
-@coroutine
-def destruct_coro():
-    """
-    Coroutine for destructing a parameters data structure into a flattened
-    numpy array
-
-    """
-
-    x = yield
-    while True:
-        x_vec = destruct(x)
-        x = yield x_vec
-
-
-@coroutine
-def restruct_coro(xref):
-    """
-    Coroutine for restructing a parameters data structure from a flattened
-    numpy array into an object with the same structure as xref
-
-    """
-    x_vec = yield
-    while True:
-        x = restruct(x_vec, xref)
-        x_vec = yield x
 
 
 @docstring(DESTRUCT_DOCSTR)

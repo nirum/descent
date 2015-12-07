@@ -3,7 +3,7 @@ Test optimization of a quadratic function
 """
 
 import numpy as np
-from descent import GradientDescent
+from descent import Optimizer
 from descent.utils import wrap
 from descent.algorithms import sgd
 
@@ -17,9 +17,9 @@ def test_fixedpoint():
         return x
 
     xstar = np.array([0., 0.])
-    coro = sgd()
-    xinit = coro.send(xstar)
-    xnext = coro.send(grad(xinit))
+    xinit = xstar
+    algorithm = sgd(xinit)
+    xnext = algorithm(grad(xstar))
 
     assert np.allclose(xnext, xstar)
 
@@ -40,8 +40,7 @@ def test_quadratic_bowl():
         grad = [theta[0]-theta_true[0], theta[1]-theta_true[1]]
         return np.sum(obj), grad
 
-    opt = GradientDescent(theta_init, f_df, sgd(lr=1e-2))
-    opt.callbacks = []
+    opt = Optimizer(theta_init, f_df, sgd, {'lr': 1e-2})
     opt.run(maxiter=1e3)
 
     for theta in zip(opt.theta, theta_true):

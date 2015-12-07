@@ -1,174 +1,199 @@
 """
 First order gradient descent algorithms
 
-Each algorithm in this module is a coroutine. You send in the gradient into
-the coroutine, and it spits out the next iterate of the algorithm.
-
 """
 
 from __future__ import division
-from .utils import coroutine
 import numpy as np
 from collections import deque
+from abc import ABCMeta, abstractmethod
 
-__all__ = ['sgd', 'nag', 'rmsprop', 'sag', 'adam']
-
-
-@coroutine
-def sgd(lr=1e-3, momentum=0., decay=0.):
-
-    # initialize with the first iterate
-    xk = yield
-    vk = np.zeros_like(xk)
-    k = 0.
-
-    while True:
-
-        k += 1.
-        gradient = yield xk
-        vnext = momentum * vk - lr * gradient / (decay * k + 1.)
-        xk += vnext
-        vk = vnext
+__all__ = ['sgd', 'StochasticGradientDescent',
+           'nag', 'NesterovAcceleratedGradient',
+           'rmsprop', 'RMSProp',
+           'sag', 'StochasticAverageGradient',
+           'adam', 'ADAM']
 
 
-@coroutine
-def nag(lr=1e-3):
-    """
-    Nesterov's Accelerated Gradient Descent
+class Algorithm(metaclass=ABCMeta):
 
-    Parameters
-    ----------
-    lr : float, optional
-        Learning rate (Default: 1e-3)
+    def __init__(self, xinit):
+        self.k = 0.
+        self.xk = xinit.copy()
 
-    """
+    def __next__(self):
+        """Called to update every iteration"""
+        self.k += 1.0
 
-    xk = yield
-    yk = xk.copy()
-    k = 0.
-
-    while True:
-
-        k += 1.
-
-        # compute gradient
-        gradient = yield yk
-
-        # compute the new value of x
-        xnext = yk - lr * gradient
-
-        # compute the new value of y
-        ynext = xnext + (k / (k + 3.)) * (xnext - xk)
-
-        # update parameters
-        xk = xnext
-        yk = ynext
+    @abstractmethod
+    def __call__(self, gradient):
+        raise NotImplementedError
 
 
-@coroutine
-def rmsprop(lr=1e-3, damping=0.1, decay=0.9):
-    """
-    RMSProp
+class StochasticGradientDescent(Algorithm):
 
-    Parameters
-    ----------
-    f_df : function
+    def __init__(self, xinit, lr=1e-3, momentum=0., decay=0.):
 
-    theta_init : array_like
+        super().__init__(xinit)
+        self.vk = np.zeros_like(xinit)
+        self.lr = lr
+        self.momentum = momentum
+        self.decay = decay
 
-    lr : float, optional
-        Learning rate (Default: 1e-3)
+    def __call__(self, gradient):
 
-    damping : float, optional
-        Damping term (Default: 0)
+        # increase the iteration
+        super().__next__()
 
-    decay : float, optional
-        Decay of the learning rate (Default: 0)
+        # velocity
+        self.vk = self.momentum * self.vk - self.lr * gradient \
+            / (self.decay * self.k + 1.)
 
-    """
+        # updated parameters
+        self.xk += self.vk
 
-    xk = yield
-    rms = np.zeros_like(xk)
-    k = 0.
+        return self.xk
 
-    while True:
 
-        k += 1.
+class NesterovAcceleratedGradient(Algorithm):
 
-        # compute objective and gradient
-        gradient = yield xk
+    def __init__(self, xinit, lr=1e-3):
+        """
+        Nesterov's Accelerated Gradient Descent
+
+        Parameters
+        ----------
+        lr : float, optional
+            Learning rate (Default: 1e-3)
+
+        """
+
+        super().__init__(xinit)
+        self.yk = self.xk.copy()
+        self.lr = lr
+
+    def __call__(self, gradient):
+
+        # increase the iteration
+        super().__next__()
+
+        xprev = self.xk.copy()
+        self.xk = self.yk - self.lr * gradient
+        self.yk = self.xk + (self.k / (self.k + 3.)) * (self.xk - xprev)
+        return self.yk
+
+
+class RMSProp(Algorithm):
+
+    def __init__(self, xinit, lr=1e-3, damping=0.1, decay=0.9):
+        """
+        RMSProp
+
+        Parameters
+        ----------
+        theta_init : array_like
+
+        lr : float, optional
+            Learning rate (Default: 1e-3)
+
+        damping : float, optional
+            Damping term (Default: 0)
+
+        decay : float, optional
+            Decay of the learning rate (Default: 0)
+
+        """
+
+        super().__init__(xinit)
+        self.rms = np.zeros_like(self.xk)
+        self.lr = lr
+        self.damping = damping
+        self.decay = decay
+
+    def __call__(self, gradient):
+
+        super().__next__()
 
         # update RMS
-        rms = decay * rms + (1-decay) * gradient**2
+        self.rms = self.decay * self.rms + (1 - self.decay) * gradient**2
 
         # gradient descent update
-        xk -= lr * gradient / (damping + np.sqrt(rms))
+        self.xk -= self.lr * gradient / (self.damping + np.sqrt(self.rms))
+
+        return self.xk
 
 
-@coroutine
-def sag(nterms=10, lr=1e-3):
-    """
-    Stochastic Average Gradient (SAG)
+class StochasticAverageGradient(Algorithm):
 
-    Parameters
-    ----------
-    theta_init : array_like
-        Initial parameters
+    def __init__(self, xinit, nterms=10, lr=1e-3):
+        """
+        Stochastic Average Gradient (SAG)
 
-    nterms : int, optional
-        Number of gradient evaluations to use in the average (Default: 10)
+        Parameters
+        ----------
+        theta_init : array_like
+            Initial parameters
 
-    lr : float, optional
-        (Default: 1e-3)
+        nterms : int, optional
+            Number of gradient evaluations to use in the average (Default: 10)
 
-    """
+        lr : float, optional
+            (Default: 1e-3)
 
-    xk = yield
-    gradients = deque([], nterms)
-    k = 0.
+        """
 
-    while True:
+        super().__init__(xinit)
+        self.gradients = deque([], nterms)
+        self.lr = lr
 
-        k += 1.
+    def __call__(self, gradient):
 
-        # compute the objective and gradient
-        gradient = yield xk
+        super().__next__()
 
         # push the new gradient onto the deque, update the average
-        gradients.append(gradient)
+        self.gradients.append(gradient)
 
         # update
-        xk -= lr * np.mean(gradients, axis=0)
+        self.xk -= self.lr * np.mean(self.gradients, axis=0)
+
+        return self.xk
 
 
-@coroutine
-def adam(lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
+class ADAM(Algorithm):
 
-    xk = yield
-    momentum = np.zeros_like(xk)
-    velocity = np.zeros_like(xk)
-    b1, b2 = beta
+    def __init__(self, xinit, lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
 
-    # current iteration
-    k = 0
+        super().__init__(xinit)
+        self.momentum = np.zeros_like(self.xk)
+        self.velocity = np.zeros_like(self.xk)
+        self.lr = lr
+        self.b1, self.b2 = beta
+        self.eps = epsilon
 
-    while True:
+    def __call__(self, gradient):
 
         # update the iteration
-        k += 1
-
-        # send in the gradient
-        gradient = yield xk
+        super().__next__()
 
         # update momentum
-        momentum = b1 * momentum + (1 - b1) * gradient
+        self.momentum = self.b1 * self.momentum + (1. - self.b1) * gradient
 
         # update velocity
-        velocity = b2 * velocity + (1 - b2) * (gradient ** 2)
+        self.velocity = self.b2 * self.velocity + (1 - self.b2) * (gradient ** 2)
 
         # normalize
-        momentum_normalized = momentum / (1 - b1 ** k)
-        velocity_normalized = np.sqrt(velocity / (1 - b2 ** k))
+        momentum_norm = self.momentum / (1 - self.b1 ** self.k)
+        velocity_norm = np.sqrt(self.velocity / (1 - self.b2 ** self.k))
 
         # gradient descent update
-        xk -= lr * momentum_normalized / (epsilon + velocity_normalized)
+        self.xk -= self.lr * momentum_norm / (self.eps + velocity_norm)
+
+        return self.xk
+
+
+# aliases
+sgd = StochasticGradientDescent
+nag = NesterovAcceleratedGradient
+rmsprop = RMSProp
+sag = StochasticAverageGradient
+adam = ADAM

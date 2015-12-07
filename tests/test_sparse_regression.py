@@ -5,8 +5,7 @@ Test suite for sparse regression
 
 import numpy as np
 import descent
-from descent import GradientDescent
-from descent.connectors import join, concat
+from descent import Optimizer
 from descent.proxops import sparse
 
 
@@ -60,10 +59,7 @@ def test_sparse_regression():
             return obj, grad
 
         # optimizer
-        alg = getattr(descent.algorithms, algorithm)(lr=5e-3)
-        proj = join(concat(0.1), sparse(1.0))
-        opt = GradientDescent(xls, f_df, alg, projection=proj)
-        opt.callbacks = []
+        opt = Optimizer(xls, f_df, algorithm, {'lr': 5e-3}, proxop=sparse(10.0), rho=1.0)
         opt.run(maxiter=5000)
 
         # test

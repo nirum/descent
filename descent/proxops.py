@@ -4,8 +4,9 @@ Proximal operators / mappings
 """
 
 from __future__ import division
-from .utils import proxify, coroutine
 import numpy as np
+from abc import ABCMeta, abstractmethod
+from functools import wraps
 
 try:
     from scipy.optimize import minimize as scipy_minimize
@@ -19,13 +20,36 @@ try:
 except ImportError:
     print('Error: scikit-image not found. TVD will not work.')
 
-__all__ = ['nucnorm', 'sparse', 'clip', 'linsys', 'squared_error',
-           'lbfgs', 'tvd', 'smooth', 'linear', 'fantope', 'identity']
+__all__ = ['nucnorm', 'sparse', 'linsys', 'squared_error',
+           'lbfgs', 'tvd', 'smooth', 'linear', 'fantope']
 
 
-@proxify
-def identity(x, rho):
-    return x
+class ProximalOperatorBaseClass(metaclass=ABCMeta):
+
+    @abstractmethod
+    def __call__(self, x, rho):
+        raise NotImplementedError
+
+
+def proxify(func):
+
+    class ProxOp(ProximalOperatorBaseClass):
+
+        def __init__(self, *args, **kwargs):
+            """
+            Initializes a proximal operator
+
+            """
+
+            self.args = args
+            self.kwargs = kwargs
+
+        @wraps(func)
+        def __call__(self, x, rho):
+            return func(x, rho, *self.args, **self.kwargs)
+
+    return ProxOp
+
 
 @proxify
 def nucnorm(x, rho, penalty):
@@ -53,37 +77,28 @@ def sparse(x, rho, penalty):
     return (x - lmbda) * (x >= lmbda) + (x + lmbda) * (x <= -lmbda)
 
 
-@proxify
-def clip(x, rho, value=0):
-    """
-    Clip the input below a certain value
+class linsys(ProximalOperatorBaseClass):
 
-    """
-    return np.maximum(x, value)
+    def __init__(self, A, b):
+        """
+        Proximal operator for solving a linear least squares system, Ax = b
 
+        Parameters
+        ----------
+        A : array_like
+            Sensing matrix (Ax = b)
 
-@coroutine
-def linsys(A, b):
-    """
-    Proximal operator for solving a linear least squares system, Ax = b
+        b : array_like
+            Responses (Ax = b)
 
-    Parameters
-    ----------
-    A : array_like
-        Sensing matrix (Ax = b)
+        """
 
-    b : array_like
-        Responses (Ax = b)
+        self.P = A.T.dot(A)
+        self.q = A.T.dot(b)
+        self.n = self.q.size
 
-    """
-    P = A.T.dot(A)
-    q = A.T.dot(b)
-
-    x, rho = yield
-
-    while True:
-        y = np.linalg.solve(rho * np.eye(q.size) + P, rho * x + q)
-        x, rho = yield y
+    def __call__(self, x, rho):
+        return np.linalg.solve(rho * np.eye(self.n) + self.P, rho * x + self.q)
 
 
 @proxify
@@ -129,6 +144,11 @@ def tvd(x, rho, penalty):
     """
 
     return denoise_tv_bregman(x, rho / penalty)
+
+
+@proxify
+def nonneg(x, rho):
+    return np.maximum(x, 0)
 
 
 @proxify

@@ -1,11 +1,9 @@
-from .utils import coroutine
 from collections import defaultdict
 import tableprint as tp
 
 __all__ = ['printer', 'store']
 
 
-@coroutine
 def printer(*keys, every=1, width=15):
 
     while True:
@@ -26,7 +24,6 @@ def printer(*keys, every=1, width=15):
             print(tp.row(list(map(float, values)), column_width=width), flush=True)
 
 
-@coroutine
 def store(*keys, every=1):
 
     cache = defaultdict(list)

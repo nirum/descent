@@ -1,28 +1,45 @@
-from .connectors import run, select, concat, pipe, broadcast, saveall, save, join
-from .utils import wrap, make_coroutine, destruct_coro, restruct_coro, destruct
 from .io import printer, store
 from . import algorithms
 from . import proxops
 from copy import deepcopy
 from itertools import count
+from .utils import wrap, restruct, destruct
 import numpy as np
 
 
 class Optimizer:
 
-    def __init__(self, theta_init):
+    def __init__(self, theta_init, f_df, algorithm, options, proxop=None, rho=None):
 
-        self.theta = deepcopy(theta_init)
+        self.theta = theta_init
+        self.objective, self.gradient = wrap(f_df, theta_init)
         self.iteration = 0
 
-        # default callbacks
-        self.callbacks = [printer('iteration', 'objective'),
-                            store('iteration', 'objective')]
+        if type(algorithm) is str:
+            self.algorithm = getattr(algorithms, algorithm)(destruct(theta_init), **options)
+        elif issubclass(algorithm, algorithms.Algorithm):
+            self.algorithm = algorithm(destruct(theta_init), **options)
+        else:
+            raise ValueError('Algorithm not valid')
+
+        if proxop is not None:
+
+            assert isinstance(proxop, proxops.ProximalOperatorBaseClass), \
+                "proxop must subclass the proximal operator base class"
+
+            assert rho is not None, \
+                "Must give a value for rho"
+
+            self.proxop = proxop
+            self.rho = rho
+
+    def restruct(self, x):
+        return restruct(x, self.theta)
 
     def run(self, maxiter=None):
 
         maxiter = np.inf if maxiter is None else (maxiter + self.iteration)
-        self.cleanup = False
+        xk = destruct(self.theta)
 
         try:
             for k in count(start=self.iteration):
@@ -30,12 +47,11 @@ class Optimizer:
                 # increment the iteration
                 self.iteration = k
 
-                # get the new iterate of the parameters by passing them through
-                # the pipeline
-                self.theta = pipe(self.theta, self.pipeline, log=False)
+                grad = self.gradient(xk)
+                xk = self.algorithm(grad)
 
-                # broadcast metadata to any callbacks
-                self._callback()
+                if 'proxop' in self.__dict__:
+                    xk = destruct(self.proxop(self.restruct(xk), self.rho))
 
                 # check for convergence
                 if k >= maxiter:
@@ -44,42 +60,4 @@ class Optimizer:
         except KeyboardInterrupt:
             pass
 
-        # cleanup
-        self.cleanup = True
-        self._callback()
-
-    def _callback(self):
-        results = broadcast(self.__dict__, self.callbacks)
-
-        if self.cleanup:
-            tmp = {cb.__name__: res for cb, res in zip(self.callbacks, results) if res is not None}
-            self.__dict__.update(tmp)
-
-
-class GradientDescent(Optimizer):
-
-    def __init__(self, theta_init, f_df, optimizer, projection=None):
-
-        optimizer.send(destruct(theta_init))
-        f_df_coro = make_coroutine(f_df)()
-
-        if projection is None:
-            projection = join(concat(0.), proxops.identity())
-
-        self.pipeline = [f_df_coro,
-                         saveall(('objective', 'gradient'), self.__dict__),
-                         select(1),
-                         destruct_coro(),
-                         optimizer,
-                         restruct_coro(theta_init),
-                         projection,
-                         ]
-
-        super().__init__(theta_init)
-
-class Consensus(Optimizer):
-
-    def __init__(self, theta_init, operators=None):
-
-        self.operators = operators
-        super().__init__(theta_init)
+        self.theta = self.restruct(xk)
