@@ -1,4 +1,3 @@
-from .io import printer, store
 from . import algorithms
 from . import proxops
 from copy import deepcopy

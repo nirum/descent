@@ -12,14 +12,12 @@ __all__ = [
     'algorithms',
     'proxops',
     'utils',
-    'io',
     'main',
     ]
 
 from .algorithms import *
 from .proxops import *
 from .utils import *
-from .io import *
 from .main import *
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
