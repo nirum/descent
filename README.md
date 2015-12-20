@@ -5,9 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/nirum/descent/badge.svg?branch=master&service=github)](https://coveralls.io/github/nirum/descent?branch=master)
 [![PyPi version](https://img.shields.io/pypi/v/descent.svg)](https://pypi.python.org/pypi/descent)
 
-*Descent is under active development and subject to change*
-
-Descent is a package for building optimization pipelines
+Descent is a package for performing first-order optimization in python.
 
 Documentation (work in progress) is available at [descent.readthedocs.org](http://descent.readthedocs.org/en/latest/).
 
@@ -21,7 +19,7 @@ MIT. See `LICENSE.md`
 
 ## Requirements
 
-- Python 3.3-3.5
+- Python 3.4-3.5
 - [numpy](http://www.numpy.org)
 - [toolz](https://github.com/pytoolz/toolz)
 - [multipledispatch](https://github.com/mrocklin/multipledispatch)
