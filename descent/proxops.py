@@ -203,6 +203,21 @@ def simplex(x, rho):
 
 
 @proxify
+def columns(x, rho, proxop):
+    """
+    Applies a proximal operator to the columns of a matrix
+
+    """
+
+    xnext = np.zeros_like(x0)
+
+    for ix in range(x0.shape[1]):
+        xnext[:,ix] = self.proxop(x0[:,ix], rho)
+
+    return xnext
+
+
+@proxify
 def fantope(x, rho, dim, tol=1e-4):
     """
     Projection onto the fantope
@@ -213,12 +228,12 @@ def fantope(x, rho, dim, tol=1e-4):
 
     U, V = np.linalg.eigh(x)
 
-    minval, maxval = np.maximum(u.min(), 0), np.maximum(u.max(), 20 * dim)
+    minval, maxval = np.maximum(U.min(), 0), np.maximum(U.max(), 20 * dim)
 
     while True:
 
         theta = 0.5 * (maxval + minval)
-        thr_eigvals = np.minimum(np.maximum((u - theta), 0), 1)
+        thr_eigvals = np.minimum(np.maximum((U - theta), 0), 1)
         constraint = np.sum(thr_eigvals)
 
         if np.abs(constraint - dim) <= tol:
@@ -233,4 +248,4 @@ def fantope(x, rho, dim, tol=1e-4):
         else:
             break
 
-    return np.linalg.multi_dot((U, np.diag(thr_eigvals), V))
+    return np.linalg.multi_dot((V, np.diag(thr_eigvals), V.T))
