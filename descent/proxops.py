@@ -53,13 +53,20 @@ def proxify(func):
 
 
 @proxify
-def nucnorm(x, rho, penalty):
+def nucnorm(x, rho, penalty, newshape=None):
     """
     Nuclear norm
     """
+
+    orig_shape = x.shape
+
+    if newshape is not None:
+        x = x.reshape(newshape)
+
     u, s, v = np.linalg.svd(x, full_matrices=False)
     sthr = np.maximum(s - (penalty / rho), 0)
-    return np.linalg.multi_dot((u, np.diag(sthr), v))
+
+    return np.linalg.multi_dot((u, np.diag(sthr), v)).reshape(orig_shape)
 
 
 @proxify
@@ -209,10 +216,10 @@ def columns(x, rho, proxop):
 
     """
 
-    xnext = np.zeros_like(x0)
+    xnext = np.zeros_like(x)
 
-    for ix in range(x0.shape[1]):
-        xnext[:,ix] = self.proxop(x0[:,ix], rho)
+    for ix in range(x.shape[1]):
+        xnext[:,ix] = proxop(x[:,ix], rho)
 
     return xnext
 
