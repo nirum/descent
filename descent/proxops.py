@@ -34,19 +34,33 @@ class ProximalOperatorBaseClass(metaclass=ABCMeta):
 def proxify(func):
 
     class ProxOp(ProximalOperatorBaseClass):
+        """
+        Proximal operator base class
+
+        """
 
         @wraps(func)
         def __init__(self, *args, **kwargs):
-            """
-            Initializes a proximal operator
-
-            """
-
             self.args = args
             self.kwargs = kwargs
 
-        @wraps(func)
         def __call__(self, x, rho):
+            """
+            Applies the proximal operator
+
+            Parameters
+            ----------
+            x : array_like
+                The
+
+            rho : float
+
+            Returns
+            -------
+            z : array_like
+
+            """
+
             return func(x, rho, *self.args, **self.kwargs)
 
     return ProxOp
@@ -56,6 +70,17 @@ def proxify(func):
 def nucnorm(x, rho, penalty, newshape=None):
     """
     Nuclear norm
+
+    Parameters
+    ----------
+    penalty : float
+        Value of the nuclear norm penalty. Higher values indicate a stronger penalty
+
+    newshape : tuple, optional
+        Desired shape of the parameters to apply the nuclear norm to. The given
+        parameters are reshaped to an array with this shape, or not reshaped if
+        the value of newshape is None. (Default: None)
+
     """
 
     orig_shape = x.shape

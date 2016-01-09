@@ -4,6 +4,7 @@ from copy import deepcopy
 from itertools import count
 from collections import namedtuple, defaultdict
 from .utils import wrap, restruct, destruct
+from time import perf_counter
 import numpy as np
 
 
@@ -12,6 +13,7 @@ class Optimizer:
     def __init__(self, theta_init):
         self.iteration = 0
         self.theta = theta_init
+        self.runtimes = list()
 
     def __next__(self):
         raise NotImplementedError
@@ -25,9 +27,10 @@ class Optimizer:
 
                 self.iteration = k
 
-                # TODO: time each iteration
                 # get the next iteration
+                tstart = perf_counter()
                 self.theta = next(self)
+                self.runtimes.append(perf_counter() - tstart)
 
                 # TODO: run callbacks
 
@@ -115,7 +118,7 @@ class Consensus(Optimizer):
         self.primals = [destruct(theta_init) for _ in proxops]
         self.duals = [np.zeros_like(p) for p in self.primals]
         self.rho = self.tau.init
-        self.resid = defaultdict(list)
+        # self.resid = defaultdict(list)
 
     def __next__(self):
 
