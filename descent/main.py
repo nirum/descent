@@ -1,8 +1,7 @@
 from . import algorithms
 from . import proxops
-from copy import deepcopy
 from itertools import count
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 from .utils import wrap, restruct, destruct
 from time import perf_counter
 import numpy as np
