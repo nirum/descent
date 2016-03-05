@@ -159,6 +159,33 @@ class StochasticAverageGradient(Algorithm):
         return self.xk
 
 
+class SMORMS(Algorithm):
+
+    def __init__(self, xinit, nterms=10, lr=1e-3, epsilon=1e-8):
+        super().__init__(xinit)
+        self.lr = lr
+        self.mem = np.ones_like(self.xk)
+        self.g = np.zeros_like(self.xk)
+        self.g2 = np.zeros_like(self.xk)
+        self.epsilon = 1e-8
+
+    def __call__(self, gradient):
+
+        # update the iteration
+        super().__next__()
+
+        r = 1 / (self.mem + 1)
+        self.g = (1 - r) * self.g + r * gradient
+        self.g2 = (1 - r) * self.g2 + r * gradient ** 2
+
+        glr = self.g ** 2 / (self.g2 + self.epsilon)
+        self.mem = 1 + self.mem * (1 - glr)
+
+        self.xk -= gradient * np.minimum(self.lr, glr) / (np.sqrt(self.g2) + self.epsilon)
+
+        return self.xk
+
+
 class ADAM(Algorithm):
 
     def __init__(self, xinit, lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
@@ -168,7 +195,7 @@ class ADAM(Algorithm):
         self.velocity = np.zeros_like(self.xk)
         self.lr = lr
         self.b1, self.b2 = beta
-        self.eps = epsilon
+        self.epsilon = epsilon
 
     def __call__(self, gradient):
 
@@ -186,7 +213,7 @@ class ADAM(Algorithm):
         velocity_norm = np.sqrt(self.velocity / (1 - self.b2 ** self.k))
 
         # gradient descent update
-        self.xk -= self.lr * momentum_norm / (self.eps + velocity_norm)
+        self.xk -= self.lr * momentum_norm / (self.epsilon + velocity_norm)
 
         return self.xk
 
@@ -197,3 +224,4 @@ nag = NesterovAcceleratedGradient
 rmsprop = RMSProp
 sag = StochasticAverageGradient
 adam = ADAM
+smorms = SMORMS

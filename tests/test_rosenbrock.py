@@ -3,7 +3,6 @@ Test optimization of the rosenbrock function
 """
 
 import numpy as np
-import descent
 from descent import GradientDescent
 
 
@@ -14,12 +13,12 @@ def rosenbrock(theta):
     y = theta[1]
 
     # Rosenbrock's banana function
-    obj = (1-x)**2 + 100*(y-x**2)**2
+    obj = (1 - x)**2 + 100 * (y - x**2)**2
 
     # gradient for the Rosenbrock function
     grad = np.zeros(2)
-    grad[0] = 2*x - 400*(x*y - x**3) - 2
-    grad[1] = 200*(y-x**2)
+    grad[0] = 2 * x - 400 * (x * y - x**3) - 2
+    grad[1] = 200 * (y - x**2)
 
     return obj, grad
 
@@ -36,6 +35,7 @@ def test_rosen(tol=1e-2):
                   ('nag', {'lr': 1e-3}),
                   ('rmsprop', {'lr': 1e-3}),
                   ('adam', {'lr': 1e-3}),
+                  ('smorms', {'lr': 1e-3}),
                   ('sag', {'nterms': 2, 'lr': 2e-3})]
 
     # loop over algorithms
