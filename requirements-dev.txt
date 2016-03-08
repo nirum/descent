@@ -2,3 +2,4 @@
 nose
 coveralls
 six
+pytest
