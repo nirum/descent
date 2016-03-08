@@ -2,6 +2,7 @@
 Test optimization of the rosenbrock function
 """
 
+import pytest
 import numpy as np
 from descent import GradientDescent
 
@@ -23,27 +24,26 @@ def rosenbrock(theta):
     return obj, grad
 
 
-def test_rosen(tol=1e-2):
+@pytest.mark.parametrize(
+    'algorithm, options', [
+        ('sgd', {'lr': 1e-3, 'momentum': 0.1}),
+        ('nag', {'lr': 1e-3}),
+        ('rmsprop', {'lr': 1e-3}),
+        ('adam', {'lr': 1e-3}),
+        ('smorms', {'lr': 1e-3}),
+        ('sag', {'nterms': 2, 'lr': 2e-3}),
+    ]
+)
+def test_rosen(algorithm, options, tol=1e-2):
     """Test minimization of the rosenbrock function"""
 
     # check that the gradient is zeros at the optimal point
     xstar = np.array([1, 1])
     assert np.all(rosenbrock(xstar)[1] == 0)
 
-    # list of algorithms to test (and their parameters)
-    algorithms = [('sgd', {'lr': 1e-3, 'momentum': 0.1}),
-                  ('nag', {'lr': 1e-3}),
-                  ('rmsprop', {'lr': 1e-3}),
-                  ('adam', {'lr': 1e-3}),
-                  ('smorms', {'lr': 1e-3}),
-                  ('sag', {'nterms': 2, 'lr': 2e-3})]
+    # initialize
+    opt = GradientDescent(np.zeros(2), rosenbrock, algorithm, options)
 
-    # loop over algorithms
-    for algorithm, options in algorithms:
-
-        # initialize
-        opt = GradientDescent(np.zeros(2), rosenbrock, algorithm, options)
-
-        # run the optimization algorithm
-        opt.run(maxiter=1e4)
-        assert np.linalg.norm(opt.theta - xstar) <= tol
+    # run the optimization algorithm
+    opt.run(maxiter=1e4)
+    assert np.linalg.norm(opt.theta - xstar) <= tol
