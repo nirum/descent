@@ -21,4 +21,4 @@ setup(
         'Topic :: Scientific/Engineering'],
     packages=find_packages(),
     license='MIT'
-    )
+)

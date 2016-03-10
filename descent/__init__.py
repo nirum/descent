@@ -13,7 +13,7 @@ __all__ = [
     'proxops',
     'utils',
     'main',
-    ]
+]
 
 from .algorithms import *
 from .proxops import *
