@@ -60,14 +60,10 @@ class GradientDescent(Optimizer):
         super().__init__(theta_init)
         self.objective, self.gradient = wrap(f_df, theta_init)
 
-        print(algorithm)
-        print(type(algorithm))
-        print(isinstance(algorithm, string_types))
-
         if isinstance(algorithm, string_types):
             self.algorithm = getattr(algorithms, algorithm)(destruct(theta_init), **options)
-        # elif issubclass(algorithm, algorithms.Algorithm):
-            # self.algorithm = algorithm(destruct(theta_init), **options)
+        elif issubclass(algorithm, algorithms.Algorithm):
+            self.algorithm = algorithm(destruct(theta_init), **options)
         else:
             raise ValueError('Algorithm not valid')
 
@@ -100,7 +96,7 @@ class GradientDescent(Optimizer):
 @implements_iterator
 class Consensus(Optimizer):
 
-    def __init__(self, theta_init, proxops, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
+    def __init__(self, theta_init, proxops=[], tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
         """
         Proximal Consensus (ADMM)
 
@@ -119,8 +115,6 @@ class Consensus(Optimizer):
             of tau[2] at every iteration. (See Boyd et. al. 2011 for details)
         """
 
-        assert len(proxops) >= 1, "Must be at least one objective"
-
         super().__init__(theta_init)
         self.operators = proxops
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
@@ -132,6 +126,20 @@ class Consensus(Optimizer):
         self.duals = [np.zeros_like(p) for p in self.primals]
         self.rho = self.tau.init
         # self.resid = defaultdict(list)
+
+    def add(self, operator, *args):
+        """Adds a proximal operator to the list of operators"""
+
+        if isinstance(operator, string_types):
+            op = getattr(proxops, operator)(*args)
+        elif issubclass(operator, proxops.ProximalOperatorBaseClass):
+            op = operator
+
+        self.operators.append(op)
+
+    def objective(self, theta):
+        """TODO: decide what to use for the consensus objective"""
+        return 0
 
     def __next__(self):
 

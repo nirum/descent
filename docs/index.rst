@@ -9,8 +9,6 @@ Descent: optimization tools in python
 
 `descent`_ is a library for performing optimization.
 
-.. note:: Descent is under active development. Please refer to these pages or the Github repository for the latest info.
-
 .. _descent: https://github.com/nirum/descent/
 
 Contents:

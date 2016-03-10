@@ -31,7 +31,7 @@ In addition, descent requires the following packages:
 - ``numpy`` 
 - ``toolz``
 - ``multipledispatch``
-- ``tableprint``
+- ``future``
 
 And the following are optional:
 

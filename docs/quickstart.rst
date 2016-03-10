@@ -13,7 +13,7 @@ that computes the objective and gradient of the function you want to minimize:
 
 .. code:: python
 
-    >>> opt = descent.sgd(f_df, theta_init, learning_rate)
+    >>> opt = descent.GradientDescent(theta_init, f_df, 'sgd', {'lr': learning_rate})
     >>> opt.run(maxiter=1000)
     >>> plt.plot(opt.theta)
 
@@ -23,16 +23,21 @@ Example code for ADMM, for solving a linear system with a sparsity penalty:
 
 .. code:: python
 
-    >>> opt = descent.ADMM(theta_init)
+    >>> opt = descent.Consensus(theta_init)
     >>> opt.add('linsys', A, b)
     >>> opt.add('sparse', 0.1)
     >>> opt.run()
     >>> plt.plot(opt.theta)
 
 
-Display and Storage
--------------------
-Still working on these options!
+Storage
+-------
+After calling the ``run`` command, the history of objective values is stored on the optimizer object: 
+
+.. code:: python
+    
+    >>> opt.run(maxiter=1000)
+    >>> plt.plot(opt.storage['objective'])
 
 
 Utilities
