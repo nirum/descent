@@ -1,9 +1,9 @@
 import sys
 import numpy as np
-from toolz.curried import concat, map, pipe, curry
+from toolz.curried import concat, map, pipe
 from toolz.functoolz import isunary
 from toolz import first, second, compose
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from multipledispatch import dispatch
 from functools import wraps
 
@@ -22,6 +22,9 @@ def wrap(f_df, xref, size=1):
     ----------
     f_df : function
         Must be unary (takes a single argument)
+
+    xref : list, dict, or array_like
+        The form of the parameters
 
     size : int, optional
         Size of the cache (Default=1)
@@ -73,6 +76,7 @@ def lrucache(func, size):
     cache = OrderedDict()
 
     def wrapper(x):
+        assert type(x) is np.ndarray, "Input must be an ndarray"
 
         # hash the input, using tostring for small and repr for large arrays
         if x.size <= 1e4:
@@ -143,7 +147,7 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         error = np.linalg.norm(df_approx - df_analytic) / normsum \
             if normsum > 0 else 0
 
-        errstr =  CORRECT if error < tol else INCORRECT
+        errstr = CORRECT if error < tol else INCORRECT
         out.write(("{:<10.4f} | {:<10.4f} | {:<5.6f} | {:^2}\n"
                    .format(df_approx, df_analytic, error, errstr)))
         out.flush()

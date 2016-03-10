@@ -1,7 +1,7 @@
 from . import algorithms
 from . import proxops
 from itertools import count
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from .utils import wrap, restruct, destruct
 from time import perf_counter
 import numpy as np
@@ -13,6 +13,7 @@ class Optimizer:
         self.iteration = 0
         self.theta = theta_init
         self.runtimes = list()
+        self.store = defaultdict(list)
 
     def __next__(self):
         raise NotImplementedError
@@ -26,12 +27,13 @@ class Optimizer:
 
                 self.iteration = k
 
-                # get the next iteration
+                # get the next iteration, time how long it takes
                 tstart = perf_counter()
                 self.theta = next(self)
                 self.runtimes.append(perf_counter() - tstart)
 
                 # TODO: run callbacks
+                self.store['objective'].append(self.objective(destruct(self.theta)))
 
                 # TODO: check for convergence
                 if k >= maxiter:

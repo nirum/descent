@@ -4,7 +4,6 @@ Test optimization of a quadratic function
 
 import numpy as np
 from descent import GradientDescent
-from descent.utils import wrap
 from descent.algorithms import sgd
 
 
@@ -29,18 +28,18 @@ def test_quadratic_bowl():
     Test optimization in a quadratic bowl
     """
 
-    t = np.linspace(0, 2*np.pi, 100)
+    t = np.linspace(0, 2 * np.pi, 100)
     tol = 1e-3
 
     theta_true = [np.sin(t), np.cos(t)]
     theta_init = [np.cos(t), np.sin(t)]
 
     def f_df(theta):
-        obj = 0.5*(theta[0]-theta_true[0])**2 + 0.5*(theta[1]-theta_true[1])**2
-        grad = [theta[0]-theta_true[0], theta[1]-theta_true[1]]
+        obj = 0.5 * (theta[0] - theta_true[0])**2 + 0.5 * (theta[1] - theta_true[1])**2
+        grad = [theta[0] - theta_true[0], theta[1] - theta_true[1]]
         return np.sum(obj), grad
 
-    opt = GradientDescent(theta_init, f_df, sgd, {'lr': 1e-2})
+    opt = GradientDescent(theta_init, f_df, 'sgd', {'lr': 1e-2})
     opt.run(maxiter=1e3)
 
     for theta in zip(opt.theta, theta_true):

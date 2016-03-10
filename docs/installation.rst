@@ -24,7 +24,7 @@ You can also install from source by grabbing the code from GitHub:
 Dependencies
 ------------
 
-Descent works on Python 3.3-3.5. It has only been tested on CPython (not tested on PyPy yet!).
+Descent works on Python 3.4-3.5. It has only been tested on CPython (not tested on PyPy yet!).
 
 In addition, descent requires the following packages:
 
@@ -33,14 +33,14 @@ In addition, descent requires the following packages:
 - ``multipledispatch``
 - ``tableprint``
 
-And the following are optional (necessary for some features):
+And the following are optional:
 
 - ``scipy``
 
 Development
 -----------
 
-Please submit any and all issues to the GitHub issue tracker.
+Please submit any issues to the `GitHub issue tracker <https://github.com/nirum/descent/issues/new>`_.
 
 To contribute to descent, you'll need to also install ``sphinx`` and ``numpydoc`` for documentation and
 ``nose`` for testing. We adhere to the `NumPy/SciPy documentation standards <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt#docstring-standard>`_.
