@@ -113,7 +113,7 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
     tol : float, optional
     """
 
-    if sys.version_info >= (3,0):
+    if sys.version_info >= (3, 0):
         CORRECT = u'\x1b[32m\N{HEAVY CHECK MARK}\x1b[0m'
         INCORRECT = u'\x1b[31m\N{BALLOT X}\x1b[0m'
     else:
@@ -152,7 +152,6 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         out.write(("{:<10.4f} | {:<10.4f} | {:<5.6f} | {:^2}\n"
                    .format(df_approx, df_analytic, error, errstr)))
         out.flush()
-
 
 
 @docstring(DESTRUCT_DOCSTR)
