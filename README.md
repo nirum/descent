@@ -12,7 +12,7 @@ Documentation (work in progress) is available at [descent.readthedocs.org](http:
 ## Installation
 To install, grab the latest release using `pip`:
 
-```python
+```bash
 $ pip install descent
 ```
 
