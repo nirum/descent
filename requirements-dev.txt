@@ -1,5 +1,5 @@
 -r requirements.txt
-coveralls
+python-coveralls
 six
 pytest
 pytest-cov
