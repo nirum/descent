@@ -2,6 +2,7 @@
 Test optimization of a quadratic function
 """
 
+from __future__ import (absolute_import, division, print_function)
 import numpy as np
 from descent import GradientDescent
 from descent.algorithms import sgd

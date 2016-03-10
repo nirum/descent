@@ -1,13 +1,19 @@
+from __future__ import (absolute_import, division, print_function)
+from builtins import super
+from future.utils import implements_iterator, string_types
 from . import algorithms
 from . import proxops
 from itertools import count
 from collections import namedtuple, defaultdict
 from .utils import wrap, restruct, destruct
-from time import perf_counter
 import numpy as np
+try:
+    from time import perf_counter
+except ImportError:
+    from time import time as perf_counter
 
 
-class Optimizer:
+class Optimizer(object):
 
     def __init__(self, theta_init):
         self.iteration = 0
@@ -46,6 +52,7 @@ class Optimizer:
         return restruct(x, self.theta)
 
 
+@implements_iterator
 class GradientDescent(Optimizer):
 
     def __init__(self, theta_init, f_df, algorithm, options, proxop=None, rho=None):
@@ -53,10 +60,14 @@ class GradientDescent(Optimizer):
         super().__init__(theta_init)
         self.objective, self.gradient = wrap(f_df, theta_init)
 
-        if type(algorithm) is str:
+        print(algorithm)
+        print(type(algorithm))
+        print(isinstance(algorithm, string_types))
+
+        if isinstance(algorithm, string_types):
             self.algorithm = getattr(algorithms, algorithm)(destruct(theta_init), **options)
-        elif issubclass(algorithm, algorithms.Algorithm):
-            self.algorithm = algorithm(destruct(theta_init), **options)
+        # elif issubclass(algorithm, algorithms.Algorithm):
+            # self.algorithm = algorithm(destruct(theta_init), **options)
         else:
             raise ValueError('Algorithm not valid')
 
@@ -86,6 +97,7 @@ class GradientDescent(Optimizer):
         return self.restruct(xk)
 
 
+@implements_iterator
 class Consensus(Optimizer):
 
     def __init__(self, theta_init, proxops, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):

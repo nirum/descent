@@ -3,8 +3,8 @@ Test suite for matrix approximation
 
 """
 
+from __future__ import (absolute_import, division, print_function)
 import numpy as np
-import descent
 from descent import GradientDescent
 from descent.proxops import nucnorm
 

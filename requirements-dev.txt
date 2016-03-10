@@ -1,5 +1,3 @@
 -r requirements.txt
 coveralls
-six
-pytest
-pytest-cov
+nose

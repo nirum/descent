@@ -3,7 +3,9 @@ First order gradient descent algorithms
 
 """
 
-from __future__ import division
+from __future__ import (absolute_import, division, print_function)
+from builtins import super
+from future.utils import with_metaclass
 import numpy as np
 from collections import deque
 from abc import ABCMeta, abstractmethod
@@ -15,7 +17,7 @@ __all__ = ['sgd', 'StochasticGradientDescent',
            'adam', 'ADAM']
 
 
-class Algorithm(metaclass=ABCMeta):
+class Algorithm(object, with_metaclass(ABCMeta)):
 
     def __init__(self, xinit):
         self.k = 0.

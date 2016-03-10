@@ -4,8 +4,11 @@ all:
 develop:
 	python setup.py develop
 
-test:
-	py.test -v --cov=descent --cov-report=html tests
+test2:
+	python2 /usr/local/bin/nosetests --logging-level=INFO
+
+test3:
+	nosetests -v --with-coverage --cover-package=descent --logging-level=INFO
 
 clean:
 	rm -rf htmlcov/

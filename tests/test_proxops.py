@@ -2,6 +2,7 @@
 Test proximal operators
 """
 
+from __future__ import (absolute_import, division, print_function)
 from descent import proxops
 import numpy as np
 
@@ -29,12 +30,12 @@ def test_nucnorm():
 
     op = proxops.nucnorm(pen)
 
-    X = 2*np.outer(np.random.randn(50), np.random.randn(25))
-    V = X + 0.5 * np.random.randn(50,25)
+    X = 2 * np.outer(np.random.randn(50), np.random.randn(25))
+    V = X + 0.5 * np.random.randn(50, 25)
 
     nn = lambda A: np.linalg.svd(A, compute_uv=False).sum()
 
-    assert np.abs(nn(X) - nn(op(X, rho)) - pen / rho) <= tol
+    assert np.abs(nn(X) - nn(op(V, rho)) - pen / rho) <= tol
 
 
 def test_sparse():

@@ -3,7 +3,8 @@ Proximal operators / mappings
 
 """
 
-from __future__ import division
+from __future__ import (absolute_import, division, print_function)
+from future.utils import with_metaclass
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from functools import wraps
@@ -12,7 +13,7 @@ try:
     from scipy.optimize import minimize as scipy_minimize
     from scipy.sparse import spdiags
     from scipy.sparse.linalg import spsolve
-except ImportError: # pragma no cover
+except ImportError:  # pragma no cover
     print("Package 'scipy' not found. L-BFGS and smooth proximal operators will not work.")
 
 try:
@@ -24,7 +25,7 @@ __all__ = ['nucnorm', 'sparse', 'linsys', 'squared_error',
            'lbfgs', 'tvd', 'smooth', 'linear', 'fantope']
 
 
-class ProximalOperatorBaseClass(metaclass=ABCMeta):
+class ProximalOperatorBaseClass(object, with_metaclass(ABCMeta)):
 
     @abstractmethod
     def __call__(self, x, rho):

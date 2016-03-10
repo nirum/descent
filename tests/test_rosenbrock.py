@@ -2,9 +2,10 @@
 Test optimization of the rosenbrock function
 """
 
-import pytest
+from __future__ import (absolute_import, division, print_function)
 import numpy as np
 from descent import GradientDescent
+from nose_parameterized import parameterized
 
 
 def rosenbrock(theta):
@@ -24,16 +25,14 @@ def rosenbrock(theta):
     return obj, grad
 
 
-@pytest.mark.parametrize(
-    'algorithm, options', [
-        ('sgd', {'lr': 1e-3, 'momentum': 0.1}),
-        ('nag', {'lr': 1e-3}),
-        ('rmsprop', {'lr': 1e-3}),
-        ('adam', {'lr': 1e-3}),
-        ('smorms', {'lr': 1e-3}),
-        ('sag', {'nterms': 2, 'lr': 2e-3}),
-    ]
-)
+@parameterized([
+    ('sgd', {'lr': 1e-3, 'momentum': 0.1}),
+    ('nag', {'lr': 1e-3}),
+    ('rmsprop', {'lr': 1e-3}),
+    ('adam', {'lr': 1e-3}),
+    ('smorms', {'lr': 1e-3}),
+    ('sag', {'nterms': 2, 'lr': 2e-3}),
+])
 def test_rosen(algorithm, options, tol=1e-2):
     """Test minimization of the rosenbrock function"""
 
