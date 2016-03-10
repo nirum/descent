@@ -23,4 +23,5 @@ install:
 script:
   - py.test tests -v --doctest-modules --cov=descent --cov-report=term-missing
 after_success:
+  - cat .coverage
   - coveralls
