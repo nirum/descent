@@ -9,6 +9,13 @@ Descent is a package for performing first-order optimization in python.
 
 Documentation (work in progress) is available at [descent.readthedocs.org](http://descent.readthedocs.org/en/latest/).
 
+## Installation
+To install, grab the latest release using `pip`:
+
+```python
+$ pip install descent
+```
+
 ## Contact
 For bugs, comments, concerns: use the Github issue tracker.
 
