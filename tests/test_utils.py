@@ -7,6 +7,7 @@ import numpy as np
 from descent.utils import destruct, restruct, lrucache, check_grad
 from io import StringIO
 from time import sleep, time
+import re
 
 
 def test_lrucache():
@@ -51,12 +52,14 @@ def test_check_grad():
     check_grad(f_df_correct, 5, out=output)
 
     # helper functions
-    getvalues = lambda o: [float(s.strip()) for s in o.getvalue().split('\n')[3].split('|')[:-1]]
+    ansi_escape = re.compile(r'\x1b[^m]*m')
+    getvalues = lambda o: [float(ansi_escape.sub('', s.strip())) for s in o.getvalue().split('\n')[3].split('|')[:-1]]
 
     # get the first row of data
     values = getvalues(output)
+    print(values)
     assert values[0] == values[1] == 10.0, "Correct gradient computation"
-    assert values[2] == 0.0, "Correct error computation"
+    assert values[2] <= 1e-10, "Correct error computation"
 
     output = StringIO()
     check_grad(f_df_incorrect, 5, out=output)

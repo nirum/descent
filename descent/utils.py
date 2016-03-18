@@ -32,7 +32,13 @@ def wrap(f_df, xref, size=1):
 
     """
 
-    memoized_f_df = lrucache(lambda x: f_df(restruct(x, xref)), size)
+    if size == 0:
+        memoized_f_df = lambda x: f_df(restruct(x, xref))
+    elif size > 0:
+        memoized_f_df = lrucache(lambda x: f_df(restruct(x, xref)), size)
+    else:
+        raise ValueError("size argument must be a positive integer")
+
     objective = compose(first, memoized_f_df)
     gradient = compose(destruct, second, memoized_f_df)
     return objective, gradient
@@ -120,7 +126,7 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         CORRECT = u'\x1b[32mPass\x1b[0m'
         INCORRECT = u'\x1b[31mFail\x1b[0m'
 
-    obj, grad = wrap(f_df, xref)
+    obj, grad = wrap(f_df, xref, size=0)
     x0 = destruct(xref)
     df = grad(x0)
 
@@ -131,6 +137,27 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
                .format("Numerical", "Analytic", "Error")))
     out.write(("{}".format("------------------------------------\n")))
     out.flush()
+
+    # helper function to parse a number
+    def parse_error(number):
+
+        # colors
+        failure = "\033[91m"
+        passing = "\033[92m"
+        warning = "\033[93m"
+        end = "\033[0m"
+
+        # correct
+        if error < 0.1 * tol:
+            return "{:<e}".format(error)
+
+        # warning
+        elif error < tol:
+            return "{}{:<e}{}".format(warning, error, end)
+
+        # failure
+        else:
+            return "{}{:<e}{}".format(failure, error, end)
 
     # check each dimension
     for j in range(x0.size):
@@ -149,8 +176,8 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
             if normsum > 0 else 0
 
         errstr = CORRECT if error < tol else INCORRECT
-        out.write(("{:<10.4f} | {:<10.4f} | {:<5.6f} | {:^2}\n"
-                   .format(df_approx, df_analytic, error, errstr)))
+        out.write(("{:<10.4f} | {:<10.4f} | {} | {:^2}\n"
+                   .format(df_approx, df_analytic, parse_error(error), errstr)))
         out.flush()
 
 
