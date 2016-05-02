@@ -8,6 +8,7 @@ from collections import namedtuple, defaultdict
 from .utils import wrap, restruct, destruct
 import numpy as np
 import tableprint as tp
+import sys
 try:
     from time import perf_counter
 except ImportError:
@@ -15,7 +16,7 @@ except ImportError:
 
 
 class Optimizer(object):
-    def __init__(self, theta_init, display=True):
+    def __init__(self, theta_init, display=sys.stdout):
         self.iteration = 0
         self.theta = theta_init
         self.runtimes = list()
@@ -26,7 +27,9 @@ class Optimizer(object):
         raise NotImplementedError
 
     def optional_print(self, message):
-        print(message, flush=True) if self.display else None
+        if self.display:
+            self.display.write(message + "\n")
+            self.display.flush()
 
     def run(self, maxiter=None):
         maxiter = np.inf if maxiter is None else (maxiter + self.iteration)
