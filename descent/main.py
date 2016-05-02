@@ -7,6 +7,7 @@ from itertools import count
 from collections import namedtuple, defaultdict
 from .utils import wrap, restruct, destruct
 import numpy as np
+import tableprint as tp
 try:
     from time import perf_counter
 except ImportError:
@@ -14,21 +15,23 @@ except ImportError:
 
 
 class Optimizer(object):
-
-    def __init__(self, theta_init):
+    def __init__(self, theta_init, display=True):
         self.iteration = 0
         self.theta = theta_init
         self.runtimes = list()
         self.store = defaultdict(list)
+        self.display = display
 
     def __next__(self):
         raise NotImplementedError
 
+    def optional_print(self, message):
+        print(message, flush=True) if self.display else None
+
     def run(self, maxiter=None):
-
         maxiter = np.inf if maxiter is None else (maxiter + self.iteration)
-
         try:
+            self.optional_print(tp.header(['Iteration', 'Objective', 'Runtime']))
             for k in count(start=self.iteration):
 
                 self.iteration = k
@@ -41,6 +44,11 @@ class Optimizer(object):
                 # TODO: run callbacks
                 self.store['objective'].append(self.objective(destruct(self.theta)))
 
+                # Update display
+                self.optional_print(tp.row([self.iteration,
+                                    self.store['objective'][-1],
+                                    tp.humantime(self.runtimes[-1])]))
+
                 # TODO: check for convergence
                 if k >= maxiter:
                     break
@@ -48,14 +56,23 @@ class Optimizer(object):
         except KeyboardInterrupt:
             pass
 
+        # cleanup
+        self.optional_print(tp.hr(3))
+        self.optional_print(u'\u279b Final objective: {}'.format(self.store['objective'][-1]))
+        self.optional_print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(self.runtimes))))
+        self.optional_print(u'\u279b Per iteration runtime: {} +/- {}'.format(
+            tp.humantime(np.mean(self.runtimes)),
+            tp.humantime(np.std(self.runtimes)),
+        ))
+
     def restruct(self, x):
         return restruct(x, self.theta)
 
 
 @implements_iterator
 class GradientDescent(Optimizer):
-
-    def __init__(self, theta_init, f_df, algorithm, options, proxop=None, rho=None):
+    def __init__(self, theta_init, f_df, algorithm, options=None, proxop=None, rho=None):
+        options = {} if options is None else options
 
         super().__init__(theta_init)
         self.objective, self.gradient = wrap(f_df, theta_init)
