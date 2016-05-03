@@ -49,8 +49,8 @@ class Optimizer(object):
 
                 # Update display
                 self.optional_print(tp.row([self.iteration,
-                                    self.store['objective'][-1],
-                                    tp.humantime(self.runtimes[-1])]))
+                                            self.store['objective'][-1],
+                                            tp.humantime(self.runtimes[-1])]))
 
                 # TODO: check for convergence
                 if k >= maxiter:
@@ -60,7 +60,7 @@ class Optimizer(object):
             pass
 
         # cleanup
-        self.optional_print(tp.hr(3))
+        self.optional_print(tp.bottom(3))
         self.optional_print(u'\u279b Final objective: {}'.format(self.store['objective'][-1]))
         self.optional_print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(self.runtimes))))
         self.optional_print(u'\u279b Per iteration runtime: {} +/- {}'.format(
