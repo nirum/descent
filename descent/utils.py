@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function, unicode_liter
 import sys
 import numpy as np
 from toolz.curried import concat, map, pipe
-from toolz.functoolz import isunary
+from toolz.functoolz import is_arity
 from toolz import first, second, compose
 from collections import OrderedDict
 from multipledispatch import dispatch
@@ -77,7 +77,7 @@ def lrucache(func, size):
     """
 
     # this only works for unary functions
-    assert isunary(func), "The function must be unary (take a single argument)"
+    assert is_arity(1, func), "The function must be unary (take a single argument)"
 
     # initialize the cache
     cache = OrderedDict()
