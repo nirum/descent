@@ -1,4 +1,4 @@
-"""
+﻿"""
 First order gradient descent algorithms
 
 """
@@ -48,8 +48,8 @@ class StochasticGradientDescent(Algorithm):
         super().__next__()
 
         # velocity
-        self.vk = self.momentum * self.vk - self.lr * gradient \
-            / (self.decay * self.k + 1.)
+        self.vk *= self.momentum
+        self.vk -= self.lr * gradient / (self.decay * self.k + 1.)
 
         # updated parameters
         self.xk += self.vk
@@ -117,7 +117,8 @@ class RMSProp(Algorithm):
         super().__next__()
 
         # update RMS
-        self.rms = self.decay * self.rms + (1 - self.decay) * gradient**2
+        self.rms *= self.decay
+        self.rms += (1. - self.decay) * gradient**2.
 
         # gradient descent update
         self.xk -= self.lr * gradient / (self.damping + np.sqrt(self.rms))
@@ -177,8 +178,13 @@ class SMORMS(Algorithm):
         super().__next__()
 
         r = 1 / (self.mem + 1)
-        self.g = (1 - r) * self.g + r * gradient
-        self.g2 = (1 - r) * self.g2 + r * gradient ** 2
+        r_1 = 1. - r
+
+        self.g *= r_1
+        self.g += r * gradient
+
+        self.g2 *= r_1
+        self.g2 += r * gradient ** 2
 
         glr = self.g ** 2 / (self.g2 + self.epsilon)
         self.mem = 1 + self.mem * (1 - glr)
@@ -205,10 +211,12 @@ class ADAM(Algorithm):
         super().__next__()
 
         # update momentum
-        self.momentum = self.b1 * self.momentum + (1. - self.b1) * gradient
+        self.momentum *= self.b1
+        self.momentum += (1. - self.b1) * gradient
 
         # update velocity
-        self.velocity = self.b2 * self.velocity + (1 - self.b2) * (gradient ** 2)
+        self.velocity *= self.b2
+        self.velocity += (1 - self.b2) * (gradient ** 2)
 
         # normalize
         momentum_norm = self.momentum / (1 - self.b1 ** self.k)
