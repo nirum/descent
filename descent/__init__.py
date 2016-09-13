@@ -3,21 +3,18 @@ Descent
 =======
 
 A Python package for performing first-order optimization
-
-For more information, see the accompanying README.md
-
 """
 
-__all__ = [
-    'algorithms',
-    'proxops',
-    'utils',
-    'main',
-]
+__version__ = '0.2.0'
 
 from .algorithms import *
 from .proxops import *
 from .utils import *
 from .main import *
 
-__version__ = '0.1.5'
+__all__ = [
+    *algorithms.__all__,
+    *proxops.__all__,
+    *utils.__all__,
+    *main.__all__,
+]

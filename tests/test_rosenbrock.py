@@ -11,10 +11,8 @@ from nose_parameterized import parameterized
 def rosenbrock(theta):
     """Objective and gradient for the rosenbrock function"""
 
-    x = theta[0]
-    y = theta[1]
-
     # Rosenbrock's banana function
+    x, y = theta
     obj = (1 - x)**2 + 100 * (y - x**2)**2
 
     # gradient for the Rosenbrock function

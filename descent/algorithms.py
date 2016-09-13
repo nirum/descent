@@ -8,7 +8,8 @@ from builtins import super
 from future.utils import with_metaclass
 import numpy as np
 from collections import deque
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
+from custom_inherit import DocInheritMeta
 
 __all__ = ['sgd', 'StochasticGradientDescent',
            'nag', 'NesterovAcceleratedGradient',
@@ -17,24 +18,49 @@ __all__ = ['sgd', 'StochasticGradientDescent',
            'adam', 'ADAM']
 
 
-class Algorithm(object, with_metaclass(ABCMeta)):
+class Algorithm(object, with_metaclass(DocInheritMeta(style="numpy", abstract_base_class=True))):
 
     def __init__(self, xinit):
-        self.k = 0.
+        """Initializes an optimizer.
+
+        Parameters
+        ----------
+        xinit : array_like
+        """
+        self.k = 0
         self.xk = xinit.copy()
 
     def __next__(self):
         """Called to update every iteration"""
-        self.k += 1.0
+        self.k += 1
 
     @abstractmethod
     def __call__(self, gradient):
+        """Applies the gradient.
+
+        Parameters
+        ----------
+        gradient : array_like
+
+        Returns
+        -------
+        parameters : array_like
+        """
         raise NotImplementedError
 
 
 class StochasticGradientDescent(Algorithm):
 
     def __init__(self, xinit, lr=1e-3, momentum=0., decay=0.):
+        """Stochastic gradient descent.
+
+        Optional Parameters
+        -------------------
+        lr : float
+            The learning rate
+        momentum : float
+        decay : float
+        """
 
         super().__init__(xinit)
         self.vk = np.zeros_like(xinit)
@@ -87,7 +113,7 @@ class NesterovAcceleratedGradient(Algorithm):
 
 class RMSProp(Algorithm):
 
-    def __init__(self, xinit, lr=1e-3, damping=0.1, decay=0.9):
+    def __init__(self, xinit, lr=1e-3, damping=1e-12, decay=0.9):
         """
         RMSProp
 
@@ -99,7 +125,7 @@ class RMSProp(Algorithm):
             Learning rate (Default: 1e-3)
 
         damping : float, optional
-            Damping term (Default: 0)
+            Damping term (Default: 1e-12)
 
         decay : float, optional
             Decay of the learning rate (Default: 0)
@@ -169,7 +195,7 @@ class SMORMS(Algorithm):
         self.mem = np.ones_like(self.xk)
         self.g = np.zeros_like(self.xk)
         self.g2 = np.zeros_like(self.xk)
-        self.epsilon = 1e-8
+        self.epsilon = epsilon
 
     def __call__(self, gradient):
 

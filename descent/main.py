@@ -14,6 +14,8 @@ try:
 except ImportError:
     from time import time as perf_counter
 
+__all__ = ['GradientDescent', 'Consensus']
+
 
 class Optimizer(object):
     def __init__(self, theta_init, display=sys.stdout):
