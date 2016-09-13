@@ -3,3 +3,4 @@ toolz
 multipledispatch
 future
 six
+custom_inherit
