@@ -26,7 +26,7 @@ MIT. See `LICENSE.md`
 
 ## Requirements
 
-- Python 3.4-3.5 or 2.7
+- Python 3.5+
 - [numpy](http://www.numpy.org)
 - [toolz](https://github.com/pytoolz/toolz)
 - [multipledispatch](https://github.com/mrocklin/multipledispatch)

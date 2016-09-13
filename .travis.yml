@@ -2,9 +2,7 @@ cache: apt
 sudo: false
 language: python
 python:
-  - "3.4"
   - "3.5"
-  - "3.6"
 addons:
   apt:
     packages:
