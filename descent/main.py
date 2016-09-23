@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function)
-from builtins import super
-from future.utils import implements_iterator, string_types
 from . import algorithms
 from . import proxops
 from itertools import count
@@ -74,7 +71,6 @@ class Optimizer(object):
         return restruct(x, self.theta)
 
 
-@implements_iterator
 class GradientDescent(Optimizer):
     def __init__(self, theta_init, f_df, algorithm, options=None, proxop=None, rho=None):
         options = {} if options is None else options
@@ -152,7 +148,7 @@ class Consensus(Optimizer):
     def add(self, operator, *args):
         """Adds a proximal operator to the list of operators"""
 
-        if isinstance(operator, string_types):
+        if isinstance(operator, str):
             op = getattr(proxops, operator)(*args)
         elif issubclass(operator, proxops.ProximalOperatorBaseClass):
             op = operator
