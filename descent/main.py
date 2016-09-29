@@ -1,3 +1,4 @@
+from . import algorithms
 from . import proxops
 from .utils import destruct, restruct, wrap
 from collections import namedtuple
