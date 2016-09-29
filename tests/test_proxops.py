@@ -1,8 +1,6 @@
 """
 Test proximal operators
 """
-
-from __future__ import (absolute_import, division, print_function)
 from descent import proxops
 import numpy as np
 
@@ -103,13 +101,6 @@ def test_smooth():
 
 
 def test_lbfgs():
-
-    try:
-        import scipy
-    except ImportError:
-        pass
-        return
-
     # simple objective (quadratic)
     def f_df(x):
         return 0.5 * x ** 2, x
@@ -128,11 +119,11 @@ def test_lbfgs():
 @randomseed
 def test_sdc():
 
-    x = np.random.randn(10,5)
+    x = np.random.randn(10, 5)
     A = x.T.dot(x)
     op = proxops.sdcone()
 
-    Aobs = A + 10. * np.random.randn(5,5)
+    Aobs = A + 10. * np.random.randn(5, 5)
     Ahat = op(Aobs, 0.)
 
     u0 = np.linalg.eigh(Aobs)[0]
@@ -140,6 +131,3 @@ def test_sdc():
 
     assert np.allclose(np.maximum(u0, 0), u1)
     assert np.linalg.norm(Ahat - A) <= np.linalg.norm(Aobs - A)
-
-
-

@@ -1,11 +1,8 @@
 """
 Test suite for sparse regression
-
 """
-
-from __future__ import (absolute_import, division, print_function)
 import numpy as np
-from descent import GradientDescent
+from descent import algorithms
 from descent.proxops import sparse
 
 
@@ -59,8 +56,11 @@ def test_sparse_regression():
             return obj, grad
 
         # optimizer
-        opt = GradientDescent(xls, f_df, algorithm, {'lr': 5e-3}, proxop=sparse(10.0), rho=1.0)
-        opt.run(maxiter=5000)
+        opt = getattr(algorithms, algorithm)(lr=5e-3)
+        opt.operators.append(sparse(10.0))
+
+        # run it
+        res = opt.minimize(f_df, xls, display=None, maxiter=5000)
 
         # test
-        test_error(opt.theta)
+        test_error(res.x)

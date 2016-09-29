@@ -1,8 +1,6 @@
 """
 Test conversion utilities
 """
-
-from __future__ import (absolute_import, division, print_function, unicode_literals)
 import numpy as np
 from descent.utils import destruct, restruct, lrucache, check_grad
 from io import StringIO
@@ -49,11 +47,12 @@ def test_check_grad():
         return x**3, 0.5 * x**2
 
     output = StringIO()
-    check_grad(f_df_correct, 5, out=output)
+    check_grad(f_df_correct, 5, out=output, style='grid')
 
     # helper functions
     ansi_escape = re.compile(r'\x1b[^m]*m')
-    getvalues = lambda o: [float(ansi_escape.sub('', s.strip())) for s in o.getvalue().split('\n')[3].split('|')[:-1]]
+    getvalues = lambda o: [float(ansi_escape.sub('', s.strip()).split(' ')[0])
+                           for s in o.getvalue().split('\n')[3].split('|')[1:-1]]
 
     # get the first row of data
     values = getvalues(output)
@@ -62,11 +61,11 @@ def test_check_grad():
     assert values[2] <= 1e-10, "Correct error computation"
 
     output = StringIO()
-    check_grad(f_df_incorrect, 5, out=output)
+    check_grad(f_df_incorrect, 5, out=output, style='grid')
     values = getvalues(output)
     printed_error = values[2]
     correct_error = np.abs(values[0] - values[1]) / (np.abs(values[0]) + np.abs(values[1]))
-    assert np.isclose(printed_error, correct_error), "Correct relative error"
+    assert np.isclose(printed_error, correct_error, atol=1e-4), "Correct relative error"
 
 
 def test_destruct():

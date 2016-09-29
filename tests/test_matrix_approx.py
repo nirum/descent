@@ -1,11 +1,8 @@
 """
 Test suite for matrix approximation
-
 """
-
-from __future__ import (absolute_import, division, print_function)
 import numpy as np
-from descent import GradientDescent
+from descent import algorithms
 from descent.proxops import nucnorm
 
 
@@ -55,9 +52,11 @@ def test_lowrank_matrix_approx():
             return obj, grad
 
         # optimizer
-        opt = GradientDescent(Xobs, f_df, algorithm, {'lr': 5e-3}, proxop=nucnorm(0.2), rho=1.0)
-        opt.callbacks = []
-        opt.run(maxiter=5000)
+        opt = getattr(algorithms, algorithm)(lr=5e-3)
+        opt.operators.append(nucnorm(0.2))
+
+        # run it
+        res = opt.minimize(f_df, Xobs, maxiter=5000, display=None)
 
         # test
-        test_error(opt.theta)
+        test_error(res.x)
