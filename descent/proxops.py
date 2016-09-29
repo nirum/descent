@@ -2,30 +2,23 @@
 Proximal operators / mappings
 
 """
-
-from __future__ import (absolute_import, division, print_function)
-from future.utils import with_metaclass
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from functools import wraps
-
-try:
-    from scipy.optimize import minimize as scipy_minimize
-    from scipy.sparse import spdiags
-    from scipy.sparse.linalg import spsolve
-except ImportError:  # pragma no cover
-    print("Package 'scipy' not found. L-BFGS and smooth proximal operators will not work.")
+from scipy.optimize import minimize as scipy_minimize
+from scipy.sparse import spdiags
+from scipy.sparse.linalg import spsolve
 
 try:
     from skimage.restoration import denoise_tv_bregman
 except ImportError:
     print('Error: scikit-image not found. TVD will not work.')
 
-__all__ = ['nucnorm', 'sparse', 'linsys', 'squared_error',
+__all__ = ['nucnorm', 'sparse', 'linsys', 'squared_error', 'identity',
            'lbfgs', 'tvd', 'smooth', 'linear', 'fantope']
 
 
-class ProximalOperatorBaseClass(object, with_metaclass(ABCMeta)):
+class ProximalOperatorBaseClass(metaclass=ABCMeta):
 
     @abstractmethod
     def __call__(self, x, rho):
@@ -45,7 +38,7 @@ def proxify(func):
             self.args = args
             self.kwargs = kwargs
 
-        def __call__(self, x, rho):
+        def __call__(self, x, rho=1.0):
             """
             Applies the proximal operator
 
@@ -55,6 +48,7 @@ def proxify(func):
                 The
 
             rho : float
+                (default: 1.0)
 
             Returns
             -------
@@ -112,7 +106,6 @@ def sparse(x, rho, penalty):
 
 
 class linsys(ProximalOperatorBaseClass):
-
     def __init__(self, A, b):
         """
         Proximal operator for solving a linear least squares system, Ax = b
@@ -161,7 +154,7 @@ def lbfgs(x, rho, f_df, maxiter=20):
         return obj, grad
 
     res = scipy_minimize(f_df_augmented, x, jac=True, method='L-BFGS-B',
-                            options={'maxiter': maxiter, 'disp': False})
+                         options={'maxiter': maxiter, 'disp': False})
 
     return res.x
 
@@ -214,8 +207,10 @@ def smooth(x, rho, penalty, axis=0, newshape=None):
     # Apply Laplacian smoothing (l2 norm on the parameters multiplied by
     # the laplacian)
     n = x.shape[axis]
-    lap_op = spdiags([(2 + rho / penalty) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)], [0, -1, 1], n, n, format='csc')
-    return np.rollaxis(spsolve(penalty * lap_op, rho * np.rollaxis(x, axis, 0)), axis, 0).reshape(orig_shape)
+    lap_op = spdiags([(2 + rho / penalty) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)],
+                     [0, -1, 1], n, n, format='csc')
+    return np.rollaxis(spsolve(penalty * lap_op, rho * np.rollaxis(x, axis, 0)),
+                       axis, 0).reshape(orig_shape)
 
 
 @proxify
@@ -263,9 +258,14 @@ def columns(x, rho, proxop):
     xnext = np.zeros_like(x)
 
     for ix in range(x.shape[1]):
-        xnext[:,ix] = proxop(x[:,ix], rho)
+        xnext[:, ix] = proxop(x[:, ix], rho)
 
     return xnext
+
+
+@proxify
+def identity(x, rho=None):
+    return x
 
 
 @proxify
