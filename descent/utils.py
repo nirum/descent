@@ -7,6 +7,7 @@ from toolz import first, second, compose
 from collections import OrderedDict
 from multipledispatch import dispatch
 from functools import wraps
+import tableprint as tp
 
 DESTRUCT_DOCSTR = """Deconstructs the input into a 1-D numpy array"""
 RESTRUCT_DOCSTR = """Reshapes the input into the type of the second argument"""
@@ -31,14 +32,7 @@ def wrap(f_df, xref, size=1):
         Size of the cache (Default=1)
 
     """
-
-    if size == 0:
-        memoized_f_df = lambda x: f_df(restruct(x, xref))
-    elif size > 0:
-        memoized_f_df = lrucache(lambda x: f_df(restruct(x, xref)), size)
-    else:
-        raise ValueError("size argument must be a positive integer")
-
+    memoized_f_df = lrucache(lambda x: f_df(restruct(x, xref)), size)
     objective = compose(first, memoized_f_df)
     gradient = compose(destruct, second, memoized_f_df)
     return objective, gradient
@@ -76,14 +70,21 @@ def lrucache(func, size):
         The size of the cache (number of previous calls to store)
     """
 
+    if size == 0:
+        return func
+    elif size < 0:
+        raise ValueError("size argument must be a positive integer")
+
     # this only works for unary functions
-    assert is_arity(1, func), "The function must be unary (take a single argument)"
+    if not is_arity(1, func):
+        raise ValueError("The function must be unary (take a single argument)")
 
     # initialize the cache
     cache = OrderedDict()
 
     def wrapper(x):
-        assert type(x) is np.ndarray, "Input must be an ndarray"
+        if not(type(x) is np.ndarray):
+            raise ValueError("Input must be an ndarray")
 
         # hash the input, using tostring for small and repr for large arrays
         if x.size <= 1e4:
@@ -106,7 +107,7 @@ def lrucache(func, size):
     return wrapper
 
 
-def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
+def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, width=15, style='round', out=sys.stdout):
     """
     Compares the numerical gradient to the analytic gradient
 
@@ -118,24 +119,15 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
     n : int, optional
     tol : float, optional
     """
-
-    if sys.version_info >= (3, 0):
-        CORRECT = u'\x1b[32m\N{HEAVY CHECK MARK}\x1b[0m'
-        INCORRECT = u'\x1b[31m\N{BALLOT X}\x1b[0m'
-    else:
-        CORRECT = u'\x1b[32mPass\x1b[0m'
-        INCORRECT = u'\x1b[31mFail\x1b[0m'
+    CORRECT = u'\x1b[32m\N{CHECK MARK}\x1b[0m'
+    INCORRECT = u'\x1b[31m\N{BALLOT X}\x1b[0m'
 
     obj, grad = wrap(f_df, xref, size=0)
     x0 = destruct(xref)
     df = grad(x0)
 
     # header
-    out.write(("{}".format('', "Checking the analytical gradient:\n")))
-    out.write(("{}".format("------------------------------------\n")))
-    out.write(("{:<10} | {:<10} | {:<15}\n"
-               .format("Numerical", "Analytic", "Error")))
-    out.write(("{}".format("------------------------------------\n")))
+    out.write(tp.header(["Numerical", "Analytic", "Error"], width=width, style=style) + "\n")
     out.flush()
 
     # helper function to parse a number
@@ -146,18 +138,19 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
         passing = "\033[92m"
         warning = "\033[93m"
         end = "\033[0m"
+        base = "{}{:0.3e}{}"
 
         # correct
         if error < 0.1 * tol:
-            return "{:<e}".format(error)
+            return base.format(passing, error, end)
 
         # warning
         elif error < tol:
-            return "{}{:<e}{}".format(warning, error, end)
+            return base.format(warning, error, end)
 
         # failure
         else:
-            return "{}{:<e}{}".format(failure, error, end)
+            return base.format(failure, error, end)
 
     # check each dimension
     for j in range(x0.size):
@@ -176,9 +169,10 @@ def check_grad(f_df, xref, stepsize=1e-6, n=50, tol=1e-6, out=sys.stdout):
             if normsum > 0 else 0
 
         errstr = CORRECT if error < tol else INCORRECT
-        out.write(("{:<10.4f} | {:<10.4f} | {} | {:^2}\n"
-                   .format(df_approx, df_analytic, parse_error(error), errstr)))
+        out.write(tp.row([df_approx, df_analytic, parse_error(error) + ' ' + errstr], width=width, style=style) + "\n")
         out.flush()
+
+    out.write(tp.bottom(3, width=width, style=style) + "\n")
 
 
 @docstring(DESTRUCT_DOCSTR)
