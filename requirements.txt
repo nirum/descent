@@ -1,6 +1,5 @@
 numpy
 toolz
+scipy
 multipledispatch
-future
-six
 custom_inherit
