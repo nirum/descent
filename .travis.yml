@@ -24,6 +24,6 @@ install:
   - python setup.py install
 
 script:
-  - pytest --cov-report= --cov= tests/
+  - pytest --cov=./ tests/
 after_success:
   - coveralls
