@@ -1,17 +1,17 @@
 from . import algorithms
 from . import proxops
 from .utils import destruct, restruct, wrap
-from collections import namedtuple
-import numpy as np
-import sys
-from toolz import compose
 
-import tableprint as tp
-from collections import defaultdict
-from scipy.optimize import OptimizeResult
+import sys
 from time import perf_counter
+from collections import namedtuple, defaultdict
 from itertools import count
 from functools import wraps
+
+import numpy as np
+from scipy.optimize import OptimizeResult
+from toolz import compose
+import tableprint as tp
 
 __all__ = ['Consensus', 'gradient_optimizer']
 

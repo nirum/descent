@@ -19,14 +19,12 @@ __all__ = ['nucnorm', 'sparse', 'linsys', 'squared_error', 'identity',
 
 
 class ProximalOperatorBaseClass(metaclass=ABCMeta):
-
     @abstractmethod
     def __call__(self, x, rho):
         raise NotImplementedError
 
 
 def proxify(func):
-
     class ProxOp(ProximalOperatorBaseClass):
         """
         Proximal operator base class
@@ -53,7 +51,6 @@ def proxify(func):
             Returns
             -------
             z : array_like
-
             """
 
             return func(x, rho, *self.args, **self.kwargs)
@@ -75,7 +72,6 @@ def nucnorm(x, rho, penalty, newshape=None):
         Desired shape of the parameters to apply the nuclear norm to. The given
         parameters are reshaped to an array with this shape, or not reshaped if
         the value of newshape is None. (Default: None)
-
     """
 
     orig_shape = x.shape
@@ -98,7 +94,6 @@ def sparse(x, rho, penalty):
     ----------
     penalty : float
         Strength or weight on the l1-norm
-
     """
 
     lmbda = penalty / rho
@@ -117,7 +112,6 @@ class linsys(ProximalOperatorBaseClass):
 
         b : array_like
             Responses (Ax = b)
-
         """
 
         self.P = A.T.dot(A)
@@ -139,13 +133,23 @@ def squared_error(x, rho, x_obs):
     ----------
     x_obs : array_like
         Observed array or matrix that you want to stay close to
-
     """
     return (x + x_obs / rho) / (1. + 1. / rho)
 
 
 @proxify
 def lbfgs(x, rho, f_df, maxiter=20):
+    """
+    Minimize the proximal operator of a given objective using L-BFGS
+
+    Parameters
+    ----------
+    f_df : function
+        Returns the objective and gradient of the function to minimize
+
+    maxiter : int
+        Maximum number of L-BFGS iterations
+    """
 
     def f_df_augmented(theta):
         f, df = f_df(theta)
@@ -167,7 +171,6 @@ def tvd(x, rho, penalty):
     Parameters
     ----------
     penalty : float
-
     """
 
     return denoise_tv_bregman(x, rho / penalty)
@@ -175,6 +178,7 @@ def tvd(x, rho, penalty):
 
 @proxify
 def nonneg(x, rho):
+    """Projection onto the non-negative orthant"""
     return np.maximum(x, 0)
 
 
@@ -196,7 +200,6 @@ def smooth(x, rho, penalty, axis=0, newshape=None):
         Desired shape of the parameters to apply the nuclear norm to. The given
         parameters are reshaped to an array with this shape, or not reshaped if
         the value of newshape is None. (Default: None)
-
     """
 
     orig_shape = x.shape
@@ -215,20 +218,14 @@ def smooth(x, rho, penalty, axis=0, newshape=None):
 
 @proxify
 def sdcone(x, rho):
-    """
-    Projection onto the semidefinite cone
-
-    """
+    """Projection onto the semidefinite cone"""
     U, V = np.linalg.eigh(x)
     return V.dot(np.diag(np.maximum(U, 0)).dot(V.T))
 
 
 @proxify
 def linear(x, rho, weights):
-    """
-    Proximal operator for a linear function w^T x
-
-    """
+    """Proximal operator for a linear function w^T x"""
     return x - weights / rho
 
 
@@ -238,7 +235,6 @@ def simplex(x, rho):
     Projection onto the probability simplex
 
     http://arxiv.org/pdf/1309.1541v1.pdf
-
     """
 
     # sort the elements in descending order
@@ -250,10 +246,7 @@ def simplex(x, rho):
 
 @proxify
 def columns(x, rho, proxop):
-    """
-    Applies a proximal operator to the columns of a matrix
-
-    """
+    """Applies a proximal operator to the columns of a matrix"""
 
     xnext = np.zeros_like(x)
 
@@ -265,16 +258,17 @@ def columns(x, rho, proxop):
 
 @proxify
 def identity(x, rho=None):
+    """Identity operator"""
     return x
 
 
 @proxify
 def fantope(x, rho, dim, tol=1e-4):
     """
-    Projection onto the fantope
+    Projection onto the fantope [1]_
 
-    TODO: add citation
-
+    .. [1] Vu, Vincent Q., et al. "Fantope projection and selection: A near-optimal convex
+           relaxation of sparse PCA." Advances in neural information processing systems. 2013.
     """
 
     U, V = np.linalg.eigh(x)
