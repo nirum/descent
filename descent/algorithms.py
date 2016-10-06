@@ -12,6 +12,17 @@ __all__ = ['sgd', 'nag', 'rmsprop', 'sag', 'smorms', 'adam']
 
 @gradient_optimizer
 def sgd(lr=1e-3, mom=0.):
+    """
+    Stochastic gradient descent (SGD)
+
+    Parameters
+    ----------
+    lr : float, optional
+        Learning rate (Default: 1e-3)
+
+    mom : float, optional
+        Momentum (Default: 0.0)
+    """
 
     # initial parameters
     xk = yield
@@ -28,6 +39,14 @@ def sgd(lr=1e-3, mom=0.):
 
 @gradient_optimizer
 def nag(lr=1e-3):
+    """
+    Nesterov's accelerated gradient (NAG)
+
+    Parameters
+    ----------
+    lr : float, optional
+        Learning rate (Default: 1e-3)
+    """
     xk = yield
     yk = xk.copy()
 
@@ -45,8 +64,6 @@ def rmsprop(lr=1e-3, damping=1e-12, decay=0.9):
 
     Parameters
     ----------
-    theta_init : array_like
-
     lr : float, optional
         Learning rate (Default: 1e-3)
 
@@ -73,15 +90,11 @@ def sag(nterms=10, lr=1e-3):
 
     Parameters
     ----------
-    theta_init : array_like
-        Initial parameters
-
     nterms : int, optional
         Number of gradient evaluations to use in the average (Default: 10)
 
     lr : float, optional
         (Default: 1e-3)
-
     """
     xk = yield
     gradients = deque([], nterms)
@@ -98,6 +111,17 @@ def sag(nterms=10, lr=1e-3):
 
 @gradient_optimizer
 def smorms(nterms=10, lr=1e-3, epsilon=1e-8):
+    """
+    Stochastic Average Gradient (SAG)
+
+    Parameters
+    ----------
+    nterms : int, optional
+        Number of gradient evaluations to use in the average (Default: 10)
+
+    lr : float, optional
+        (Default: 1e-3)
+    """
     xk = yield
     mem = np.ones_like(xk)
     g = np.zeros_like(xk)
@@ -118,7 +142,20 @@ def smorms(nterms=10, lr=1e-3, epsilon=1e-8):
 
 @gradient_optimizer
 def adam(lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
+    """
+    ADAM
 
+    Parameters
+    ----------
+    lr : float, optional
+        Learnin rate (Default: 1e-3)
+
+    beta : (float, float)
+        (Default: (0.9, 0.999))
+    
+    epsilon : float
+        (Default: 1e-8)
+    """
     xk = yield
     mk = np.zeros_like(xk)
     vk = np.zeros_like(xk)
