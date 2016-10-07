@@ -1,4 +1,3 @@
-from . import algorithms
 from . import proxops
 from .utils import destruct, restruct, wrap
 
@@ -105,7 +104,7 @@ class Consensus(Optimizer):
                 if (primal_resid <= self.tol.primal) & (dual_resid <= self.tol.dual):
                     break
 
-                if k > maxiter:
+                if k >= maxiter:
                     break
 
         except KeyboardInterrupt:
@@ -139,7 +138,7 @@ def gradient_optimizer(coro):
             # setup
             xk = self.algorithm.send(destruct(x0).copy())
             store = defaultdict(list)
-            runtimes = defaultdict(list)
+            runtimes = []
             if len(self.operators) == 0:
                 self.operators = [proxops.identity()]
 
@@ -147,7 +146,7 @@ def gradient_optimizer(coro):
             obj, grad = wrap(f_df, x0)
             transform = compose(destruct, *reversed(self.operators), self.restruct)
 
-            self.optional_print(tp.header(['Iteration', 'Objective', '||Grad||', 'Grad Eval', 'Update Step']))
+            self.optional_print(tp.header(['Iteration', 'Objective', '||Grad||', 'Runtime']))
             try:
                 for k in count():
 
@@ -155,33 +154,30 @@ def gradient_optimizer(coro):
                     tstart = perf_counter()
                     f = obj(xk)
                     df = grad(xk)
-                    runtimes['f_df'].append(perf_counter() - tstart)
-                    store['f'].append(f)
-                    tstart = perf_counter()
                     xk = transform(self.algorithm.send(df))
-                    runtimes['updates'].append(perf_counter() - tstart)
+                    runtimes.append(perf_counter() - tstart)
+                    store['f'].append(f)
 
                     # Update display
                     self.optional_print(tp.row([k,
                                                 f,
                                                 np.linalg.norm(destruct(df)),
-                                                tp.humantime(runtimes['f_df'][-1]),
-                                                tp.humantime(runtimes['updates'][-1])]))
+                                                tp.humantime(runtimes[-1])]))
 
-                    if k > maxiter:
+                    if k >= maxiter:
                         break
 
             except KeyboardInterrupt:
                 pass
 
-            self.optional_print(tp.bottom(3))
+            self.optional_print(tp.bottom(4))
 
             # cleanup
             self.optional_print(u'\u279b Final objective: {}'.format(store['f'][-1]))
-            self.optional_print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(runtimes['f_df']))))
+            self.optional_print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(runtimes))))
             self.optional_print(u'\u279b Per iteration runtime: {} +/- {}'.format(
-                tp.humantime(np.mean(runtimes['f_df'])),
-                tp.humantime(np.std(runtimes['f_df'])),
+                tp.humantime(np.mean(runtimes)),
+                tp.humantime(np.std(runtimes)),
             ))
 
             # result
