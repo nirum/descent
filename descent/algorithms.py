@@ -1,4 +1,4 @@
-"""
+﻿"""
 First order gradient descent algorithms
 
 """
@@ -79,7 +79,8 @@ def rmsprop(lr=1e-3, damping=1e-12, decay=0.9):
 
     for k in count():
         grad = yield xk
-        rms = decay * rms + (1 - decay) * grad**2
+        rms *= decay
+        rms += (1 - decay) * grad**2
         xk -= lr * grad / (damping + np.sqrt(rms))
 
 
@@ -136,8 +137,13 @@ def smorms(lr=1e-3, epsilon=1e-8):
         grad = yield xk
 
         r = 1 / (mem + 1)
-        g = (1 - r) * g + r * grad
-        g2 = (1 - r) * g2 + r * grad ** 2
+        r_1 = 1. - r
+
+        g *= r_1
+        g += r * grad
+
+        g2 *= r_1
+        g2 += r * grad ** 2
 
         glr = g ** 2 / (g2 + epsilon)
         mem = 1 + mem * (1 - glr)
@@ -169,10 +175,12 @@ def adam(lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
     for k in count(start=1):
         grad = yield xk
 
-        mk = b1 * mk + (1. - b1) * grad
+        mk *= b1
+        mk += (1. - b1) * grad
 
         # update velocity
-        vk = b2 * vk + (1. - b2) * (grad ** 2)
+        vk *= b2
+        vk += (1. - b2) * (grad ** 2)
 
         # normalize
         momentum_norm = mk / (1 - b1 ** k)
