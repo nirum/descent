@@ -110,17 +110,22 @@ def sag(nterms=10, lr=1e-3):
 
 
 @gradient_optimizer
-def smorms(nterms=10, lr=1e-3, epsilon=1e-8):
+def smorms(lr=1e-3, epsilon=1e-8):
     """
-    Stochastic Average Gradient (SAG)
+    Squared mean over root mean squared cubed (SMORMS3)
+
+    Notes
+    -----
+    by Simon Funk
+    http://sifter.org/~simon/journal/20150420.html
 
     Parameters
     ----------
-    nterms : int, optional
-        Number of gradient evaluations to use in the average (Default: 10)
-
     lr : float, optional
         (Default: 1e-3)
+
+    epsilon : float, optional
+        (Default: 1e-8)
     """
     xk = yield
     mem = np.ones_like(xk)
@@ -152,7 +157,7 @@ def adam(lr=1e-3, beta=(0.9, 0.999), epsilon=1e-8):
 
     beta : (float, float)
         (Default: (0.9, 0.999))
-    
+
     epsilon : float
         (Default: 1e-8)
     """
