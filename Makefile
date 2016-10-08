@@ -14,4 +14,4 @@ clean:
 	rm -rf descent/__pycache__
 
 upload:
-	python setup.py sdist bdist_wininst upload
+	python setup.py sdist upload
