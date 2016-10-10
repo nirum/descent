@@ -16,11 +16,10 @@ setup(
         'custom_inherit',
         'tableprint',
     ],
-    extras_require=[
-        'coveralls',
-        'pytest',
-        'coverage',
-    ],
+    extras_require={
+        'dev': [],
+        'test': ['coveralls', 'pytest', 'coverage'],
+    },
     long_description='''
         The descent package contains tools for performing first order
         optimization of functions. That is, given the gradient of an

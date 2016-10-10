@@ -38,7 +38,6 @@ def ackley(theta):
     B = np.exp(0.5 * (np.cos(2 * np.pi * x) + np.cos(2 * np.pi * y)))
     obj = A - B + np.exp(1.) + 20.
 
-    # grad = np.array([A * -0.2 * 0.5 * 0.5 * (x ** 2 + y ** 2) * 2 * x - 
     grad = np.array([
         A * (-0.2 * np.sqrt(0.5) * (x ** 2 + y ** 2)**(-0.5) * x) + B * np.pi * np.sin(2 * np.pi * x),
         A * (-0.2 * np.sqrt(0.5) * (x ** 2 + y ** 2)**(-0.5) * y) + B * np.pi * np.sin(2 * np.pi * y),
