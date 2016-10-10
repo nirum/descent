@@ -164,6 +164,7 @@ def check_grad(f_df, xref, stepsize=1e-6, tol=1e-6, width=15, style='round', out
             return base.format(failure, error, end)
 
     # check each dimension
+    num_errors = 0
     for j in range(x0.size):
 
         # take a small step in one dimension
@@ -179,12 +180,14 @@ def check_grad(f_df, xref, stepsize=1e-6, tol=1e-6, width=15, style='round', out
         error = np.linalg.norm(df_approx - df_analytic) / normsum \
             if normsum > 0 else 0
 
+        num_errors += error >= tol
         errstr = CORRECT if error < tol else INCORRECT
         out.write(tp.row([df_approx, df_analytic, parse_error(error) + ' ' + errstr],
                          width=width, style=style) + "\n")
         out.flush()
 
     out.write(tp.bottom(3, width=width, style=style) + "\n")
+    return num_errors
 
 
 @docstring(DESTRUCT_DOCSTR)
