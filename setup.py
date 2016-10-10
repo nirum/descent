@@ -7,7 +7,20 @@ setup(
     author='Niru Maheshwaranathan',
     author_email='nirum@stanford.edu',
     url='https://github.com/nirum/descent',
-    install_requires=['numpy', 'toolz', 'multipledispatch', 'tableprint', 'future'],
+    install_requires=[
+        'six',
+        'numpy',
+        'toolz',
+        'scipy',
+        'multipledispatch',
+        'custom_inherit',
+        'tableprint',
+    ],
+    extras_require=[
+        'coveralls',
+        'pytest',
+        'coverage',
+    ],
     long_description='''
         The descent package contains tools for performing first order
         optimization of functions. That is, given the gradient of an
