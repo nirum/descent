@@ -175,10 +175,11 @@ def check_grad(f_df, xref, stepsize=1e-6, tol=1e-6, width=15, style='round', out
         df_approx = (obj(x0 + dx) - obj(x0 - dx)) / (2 * stepsize)
         df_analytic = df[j]
 
+        # absolute error
+        abs_error = np.linalg.norm(df_approx - df_analytic)
+
         # relative error
-        normsum = np.linalg.norm(df_approx) + np.linalg.norm(df_analytic)
-        error = np.linalg.norm(df_approx - df_analytic) / normsum \
-            if normsum > 0 else 0
+        error = abs_error if np.allclose(abs_error, 0) else abs_error / (np.linalg.norm(df_analytic) + np.linalg.norm(df_approx))
 
         num_errors += error >= tol
         errstr = CORRECT if error < tol else INCORRECT

@@ -58,7 +58,7 @@ def test_check_grad():
     values = getvalues(output)
     print(values)
     assert values[0] == values[1] == 10.0, "Correct gradient computation"
-    assert values[2] <= 1e-10, "Correct error computation"
+    assert np.allclose(values[2], 0), "Correct error computation"
 
     output = StringIO()
     check_grad(f_df_incorrect, 5, out=output, style='grid')
