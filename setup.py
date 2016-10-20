@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='descent',
-    version='0.2.3',
+    version='0.2.4',
     description='First order optimization tools',
     author='Niru Maheshwaranathan',
     author_email='nirum@stanford.edu',
