@@ -66,7 +66,7 @@ def nucnorm(x, rho, penalty, newshape=None):
     Parameters
     ----------
     penalty : float
-        Value of the nuclear norm penalty. Higher values indicate a stronger penalty
+        nuclear norm penalty hyperparameter
 
     newshape : tuple, optional
         Desired shape of the parameters to apply the nuclear norm to. The given
@@ -210,10 +210,13 @@ def smooth(x, rho, penalty, axis=0, newshape=None):
     # Apply Laplacian smoothing (l2 norm on the parameters multiplied by
     # the laplacian)
     n = x.shape[axis]
-    lap_op = spdiags([(2 + rho / penalty) * np.ones(n), -1 * np.ones(n), -1 * np.ones(n)],
+    lap_op = spdiags([(2 + rho / penalty) * np.ones(n),
+                      -1 * np.ones(n), -1 * np.ones(n)],
                      [0, -1, 1], n, n, format='csc')
-    return np.rollaxis(spsolve(penalty * lap_op, rho * np.rollaxis(x, axis, 0)),
-                       axis, 0).reshape(orig_shape)
+
+    A = penalty * lap_op
+    b = rho * np.rollaxis(x, axis, 0)
+    return np.rollaxis(spsolve(A, b), axis, 0).reshape(orig_shape)
 
 
 @proxify
@@ -267,8 +270,9 @@ def fantope(x, rho, dim, tol=1e-4):
     """
     Projection onto the fantope [1]_
 
-    .. [1] Vu, Vincent Q., et al. "Fantope projection and selection: A near-optimal convex
-           relaxation of sparse PCA." Advances in neural information processing systems. 2013.
+    .. [1] Vu, Vincent Q., et al. "Fantope projection and selection: A
+           near-optimal convex relaxation of sparse PCA." Advances in
+           neural information processing systems. 2013.
     """
 
     U, V = np.linalg.eigh(x)
