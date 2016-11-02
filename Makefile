@@ -7,6 +7,9 @@ develop:
 test:
 	pytest --cov=descent --cov-report=html tests/
 
+lint:
+	flake8 descent/
+
 clean:
 	rm -rf htmlcov/
 	rm -rf descent.egg-info

@@ -124,8 +124,10 @@ def michalewicz(theta):
         np.sin(y) * np.sin(2 * y ** 2 / np.pi) ** 20
 
     grad = np.array([
-        - np.cos(x) * np.sin(x ** 2 / np.pi) ** 20 - (40 / np.pi) * x * np.sin(x) * np.sin(x ** 2 / np.pi) ** 19 * np.cos(x ** 2 / np.pi),
-        - np.cos(y) * np.sin(2 * y ** 2 / np.pi) ** 20 - (80 / np.pi) * y * np.sin(y) * np.sin(2 * y ** 2 / np.pi) ** 19 * np.cos(2 * y ** 2 / np.pi),
+        - np.cos(x) * np.sin(x ** 2 / np.pi) ** 20 - (40 / np.pi) * x *
+        np.sin(x) * np.sin(x ** 2 / np.pi) ** 19 * np.cos(x ** 2 / np.pi),
+        - np.cos(y) * np.sin(2 * y ** 2 / np.pi) ** 20 - (80 / np.pi) * y * np.sin(y) *
+        np.sin(2 * y ** 2 / np.pi) ** 19 * np.cos(2 * y ** 2 / np.pi),
     ])
 
     return obj, grad
@@ -155,7 +157,7 @@ def zakharov(theta):
     return obj, grad
 
 
-@objective(xstar=(1, 1/np.sqrt(2)))
+@objective(xstar=(1, 1 / np.sqrt(2)))
 def dixon_price(theta):
     """Dixon-Price function"""
     x, y = theta
@@ -172,10 +174,22 @@ def goldstein_price(theta):
     """Goldstein-Price function"""
     x, y = theta
     obj = (1 + (x + y + 1) ** 2 * (19 - 14 * x + 3 * x ** 2 - 14 * y + 6 * x * y + 3 * y ** 2)) * \
-          (30 + (2 * x - 3 * y) ** 2 * (18 - 32 * x + 12 * x ** 2 + 48 * y - 36 * x * y + 27 * x ** 2))
+          (30 + (2 * x - 3 * y) ** 2 *
+           (18 - 32 * x + 12 * x ** 2 + 48 * y - 36 * x * y + 27 * x ** 2))
     grad = np.array([
-        ((2*x - 3*y)**2*(78*x - 36*y - 32) + (8*x - 12*y)*(39*x**2 - 36*x*y - 32*x + 48*y + 18))*((x + y + 1)**2*(3*x**2 + 6*x*y - 14*x + 3*y**2 - 14*y + 19) + 1) + ((2*x - 3*y)**2*(39*x**2 - 36*x*y - 32*x + 48*y + 18) + 30)*((x + y + 1)**2*(6*x + 6*y - 14) + (2*x + 2*y + 2)*(3*x**2 + 6*x*y - 14*x + 3*y**2 - 14*y + 19)),
-        ((-36*x + 48)*(2*x - 3*y)**2 + (-12*x + 18*y)*(39*x**2 - 36*x*y - 32*x + 48*y + 18))*((x + y + 1)**2*(3*x**2 + 6*x*y - 14*x + 3*y**2 - 14*y + 19) + 1) + ((2*x - 3*y)**2*(39*x**2 - 36*x*y - 32*x + 48*y + 18) + 30)*((x + y + 1)**2*(6*x + 6*y - 14) + (2*x + 2*y + 2)*(3*x**2 + 6*x*y - 14*x + 3*y**2 - 14*y + 19)),
+        ((2 * x - 3 * y)**2 * (78 * x - 36 * y - 32) + (8 * x - 12 * y) *
+         (39 * x**2 - 36 * x * y - 32 * x + 48 * y + 18)) *
+        ((x + y + 1)**2 * (3 * x**2 + 6 * x * y - 14 * x + 3 * y**2 - 14 * y + 19) + 1) +
+        ((2 * x - 3 * y)**2 * (39 * x**2 - 36 * x * y - 32 * x + 48 * y + 18) + 30) *
+        ((x + y + 1)**2 *
+         (6 * x + 6 * y - 14) + (2 * x + 2 * y + 2) *
+         (3 * x**2 + 6 * x * y - 14 * x + 3 * y**2 - 14 * y + 19)),
+        ((-36 * x + 48) * (2 * x - 3 * y)**2 + (-12 * x + 18 * y) *
+         (39 * x**2 - 36 * x * y - 32 * x + 48 * y + 18)) *
+        ((x + y + 1)**2 * (3 * x**2 + 6 * x * y - 14 * x + 3 * y**2 - 14 * y + 19) + 1) +
+        ((2 * x - 3 * y)**2 * (39 * x**2 - 36 * x * y - 32 * x + 48 * y + 18) + 30) *
+        ((x + y + 1)**2 * (6 * x + 6 * y - 14) + (2 * x + 2 * y + 2) *
+         (3 * x**2 + 6 * x * y - 14 * x + 3 * y**2 - 14 * y + 19)),
     ])
     return obj, grad
 

@@ -5,7 +5,7 @@ Descent
 A Python package for performing first-order optimization
 """
 
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 from .algorithms import *
 from .objectives import *
