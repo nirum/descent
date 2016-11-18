@@ -11,3 +11,4 @@ dependencies:
 - pip:
   - custom_inherit
   - tableprint
+  - descent
