@@ -8,7 +8,6 @@ setup(
     author_email='nirum@stanford.edu',
     url='https://github.com/nirum/descent',
     install_requires=[
-        'six',
         'numpy',
         'toolz',
         'scipy',
@@ -18,7 +17,7 @@ setup(
     ],
     extras_require={
         'dev': [],
-        'test': ['coveralls', 'pytest', 'coverage'],
+        'test': ['flake8', 'pytest', 'coverage'],
     },
     long_description='''
         The descent package contains tools for performing first order
