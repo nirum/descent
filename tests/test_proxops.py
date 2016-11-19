@@ -3,41 +3,48 @@ Test proximal operators
 """
 from descent import proxops
 import numpy as np
+import pytest
 
 
 def randomseed(func):
-    """
-    Sets the seed of numpy's random number generator
-
-    (for reproducible tests)
-    """
-
+    """Sets the seed of numpy's random number generator"""
     def wrapper(*args, **kwargs):
         np.random.seed(123)
         return func(*args, **kwargs)
-
     return wrapper
+
+
+def test_baseclass():
+    with pytest.raises(TypeError):
+        op = proxops.ProximalOperatorBaseClass()
+        op(np.array([0.,]), 1.0)
 
 
 @randomseed
 def test_nucnorm():
-
     pen = 1.
     rho = 0.1
     tol = 1.
 
-    op = proxops.nucnorm(pen)
-
     X = 2 * np.outer(np.random.randn(50), np.random.randn(25))
     V = X + 0.5 * np.random.randn(50, 25)
 
-    nn = lambda A: np.linalg.svd(A, compute_uv=False).sum()
+    # compute the nuclear norm
+    def nn(A):
+        return np.linalg.svd(A, compute_uv=False).sum()
 
+    # test nucnorm
+    op = proxops.nucnorm(pen)
     assert np.abs(nn(X) - nn(op(V, rho)) - pen / rho) <= tol
+
+    # test nucnorm (w/ reshape)
+    op = proxops.nucnorm(pen, newshape=(50, 25))
+    v = op(V.ravel(), rho)
+    assert v.shape == (50*25,)
+    assert np.abs(nn(X) - nn(v.reshape(X.shape)) - pen / rho) <= tol
 
 
 def test_sparse():
-
     pen = 0.1
     rho = 0.1
     v = np.linspace(-5, 5, 1e3)
@@ -51,7 +58,6 @@ def test_sparse():
 
 
 def test_nonneg():
-
     op = proxops.nonneg()
 
     v = np.array([-2., 0.54, -0.2, 24.])
@@ -63,7 +69,6 @@ def test_nonneg():
 
 @randomseed
 def test_linsys():
-
     A = np.random.randn(50,20)
     x = np.random.randn(20,)
     y = A.dot(x)
@@ -75,7 +80,6 @@ def test_linsys():
 
 
 def test_squared_error():
-
     xobs = np.array([-2., -1., 0., 1., 2.])
     tol = 1e-5
 
@@ -88,7 +92,6 @@ def test_squared_error():
 
 @randomseed
 def test_smooth():
-
     # noisy sine
     x_true = np.sin(np.linspace(0, np.pi, 100))
     x_obs = x_true + np.random.randn(x_true.size) * 0.2
@@ -118,7 +121,6 @@ def test_lbfgs():
 
 @randomseed
 def test_sdc():
-
     x = np.random.randn(10, 5)
     A = x.T.dot(x)
     op = proxops.sdcone()
@@ -131,3 +133,10 @@ def test_sdc():
 
     assert np.allclose(np.maximum(u0, 0), u1)
     assert np.linalg.norm(Ahat - A) <= np.linalg.norm(Aobs - A)
+
+
+def test_linear():
+    x = np.array([-2., -1., 0., 1., 2.])
+    weights = np.array([-1., 1., 0., -2., 2.])
+    op = proxops.linear(weights)
+    assert np.allclose(op(x, 0.5), x - 2 * weights)

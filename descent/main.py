@@ -26,6 +26,19 @@ class Optimizer:
             self.display.write(message + "\n")
             self.display.flush()
 
+    def add(self, operator, *args):
+        """Adds a proximal operator to the list of operators"""
+
+        if isinstance(operator, str):
+            op = getattr(proxops, operator)(*args)
+        elif isinstance(operator, proxops.ProximalOperatorBaseClass):
+            op = operator
+        else:
+            raise ValueError("operator must be a string or a subclass of ProximalOperator")
+
+        self.operators.append(op)
+        return self
+
 
 class Consensus(Optimizer):
     def __init__(self, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
@@ -46,17 +59,6 @@ class Consensus(Optimizer):
         self.operators = []
         self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
         self.tol = namedtuple('tol', ('primal', 'dual'))(*tol)
-
-    def add(self, operator, *args):
-        """Adds a proximal operator to the list of operators"""
-
-        if isinstance(operator, str):
-            op = getattr(proxops, operator)(*args)
-        elif issubclass(operator, proxops.ProximalOperatorBaseClass):
-            op = operator
-
-        self.operators.append(op)
-        return self
 
     def minimize(self, x0, display=None, maxiter=np.Inf):
 
