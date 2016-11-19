@@ -2,5 +2,4 @@ numpy
 toolz
 scipy
 multipledispatch
-custom_inherit
 tableprint

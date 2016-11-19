@@ -31,5 +31,4 @@ MIT. See `LICENSE.md`
 - [scipy](http://www.scipy.org)
 - [toolz](https://github.com/pytoolz/toolz)
 - [multipledispatch](https://github.com/mrocklin/multipledispatch)
-- [custom_inherit](https://github.com/meowklaski/custom_inherit)
 - [tableprint](https://github.com/nirum/tableprint)
