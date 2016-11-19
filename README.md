@@ -28,6 +28,8 @@ MIT. See `LICENSE.md`
 
 - Python 3.5+
 - [numpy](http://www.numpy.org)
+- [scipy](http://www.scipy.org)
 - [toolz](https://github.com/pytoolz/toolz)
 - [multipledispatch](https://github.com/mrocklin/multipledispatch)
-- [future](http://python-future.org/index.html)
+- [custom_inherit](https://github.com/meowklaski/custom_inherit)
+- [tableprint](https://github.com/nirum/tableprint)
