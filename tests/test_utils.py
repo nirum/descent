@@ -2,10 +2,17 @@
 Test conversion utilities
 """
 import numpy as np
+import descent
 from descent.utils import destruct, restruct, lrucache, check_grad
 from io import StringIO
 from time import sleep, time
 import re
+
+
+def test_all():
+    """Test that __all__ contains only names that are actually exported."""
+    missing = set(n for n in descent.__all__ if getattr(descent, n, None) is None)
+    assert len(missing) == 0
 
 
 def test_lrucache():
