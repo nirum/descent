@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/nirum/descent.svg?branch=master)](https://travis-ci.org/nirum/descent)
 [![Coverage Status](https://codecov.io/gh/nirum/descent/branch/master/graph/badge.svg)](https://codecov.io/gh/nirum/descent)
-[![Documentation Status](https://readthedocs.org/projects/descent/badge/?version=master)](http://descent.readthedocs.org/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/descent/badge/?version=latest)](http://descent.readthedocs.org/en/latest/?badge=latest)
 [![PyPi version](https://img.shields.io/pypi/v/descent.svg)](https://pypi.python.org/pypi/descent)
 
 Descent is a package for performing first-order optimization in python.
