@@ -8,3 +8,4 @@ docs/_build
 build/
 dist/
 tags
+.mypy_cache/
