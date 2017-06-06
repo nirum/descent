@@ -1,12 +1,18 @@
+import re
+import os
 from setuptools import setup, find_packages
+
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+with open(os.path.join(__location__, 'descent/metadata.py'), 'r') as f:
+    metadata = dict(re.findall(r"__([a-z_]+)__\s*=\s*'([^']+)'", f.read()))
 
 setup(
     name='descent',
-    version='0.2.5',
-    description='First order optimization tools',
-    author='Niru Maheshwaranathan',
-    author_email='nirum@stanford.edu',
-    url='https://github.com/nirum/descent',
+    version=metadata['version'],
+    description=metadata['description'],
+    author=metadata['author'],
+    author_email=metadata['author_email'],
+    url=metadata['url'],
     install_requires=[
         'numpy',
         'toolz',
@@ -31,5 +37,5 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering'],
     packages=find_packages(),
-    license='MIT'
+    license=metadata['license']
 )
