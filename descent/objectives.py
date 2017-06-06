@@ -43,7 +43,6 @@ def objective(param_scales=(1, 1), xstar=None, seed=None):
 @objective(xstar=(1, 1))
 def rosenbrock(theta):
     """Objective and gradient for the rosenbrock function"""
-
     x, y = theta
     obj = (1 - x)**2 + 100 * (y - x**2)**2
 
@@ -119,6 +118,7 @@ def camel(theta):
 
 @objective(xstar=(2.2029055201726027, 1.5707963267948954))
 def michalewicz(theta):
+    """Michalewicz function"""
     x, y = theta
     obj = - np.sin(x) * np.sin(x ** 2 / np.pi) ** 20 - \
         np.sin(y) * np.sin(2 * y ** 2 / np.pi) ** 20

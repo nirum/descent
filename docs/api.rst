@@ -26,18 +26,10 @@ Proximal operators
     :undoc-members:
     :show-inheritance:
 
-I/O Callbacks
--------------
-
-.. automodule:: descent.io
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Connectors
+Objectives
 ----------
 
-.. automodule:: descent.connectors
+.. automodule:: descent.objectives
     :members:
     :undoc-members:
     :show-inheritance:
