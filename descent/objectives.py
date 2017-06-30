@@ -4,7 +4,7 @@ Example objectives
 import numpy as np
 from functools import wraps
 
-__all__ = ['rosenbrock', 'sphere', 'matyas', 'beale', 'booth', 'mccormick',
+__all__ = ['doublewell', 'rosenbrock', 'sphere', 'matyas', 'beale', 'booth', 'mccormick',
            'camel', 'michalewicz', 'bohachevsky1', 'zakharov', 'dixon_price']
 
 
@@ -38,6 +38,17 @@ def objective(param_scales=(1, 1), xstar=None, seed=None):
         return wrapper
 
     return decorator
+
+
+@objective(xstar=(0,), param_scales=(10,))
+def doublewell(theta):
+    """Pointwise minimum of two quadratic bowls"""
+    k0, k1, depth = 0.01, 100, 0.5
+    shallow = 0.5 * k0 * theta ** 2 + depth
+    deep = 0.5 * k1 * theta ** 2
+    obj = np.minimum(shallow, deep)
+    grad = np.where(deep < shallow, k0 * theta, k1 * theta)
+    return obj, grad
 
 
 @objective(xstar=(1, 1))
