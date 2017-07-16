@@ -5,7 +5,8 @@ import numpy as np
 from functools import wraps
 
 __all__ = ['doublewell', 'rosenbrock', 'sphere', 'matyas', 'beale', 'booth', 'mccormick',
-           'camel', 'michalewicz', 'bohachevsky1', 'zakharov', 'dixon_price']
+           'camel', 'michalewicz', 'bohachevsky1', 'zakharov', 'dixon_price', 'monkey_saddle',
+           'hyperbolic_paraboloid']
 
 
 def objective(param_scales=(1, 1), xstar=None, seed=None):
@@ -48,6 +49,28 @@ def doublewell(theta):
     deep = 0.5 * k1 * theta ** 2
     obj = float(np.minimum(shallow, deep))
     grad = np.where(deep < shallow, k1 * theta, k0 * theta)
+    return obj, grad
+
+
+@objective(xstar=None)
+def monkey_saddle(theta):
+    """Monkey saddle"""
+    x, y = theta
+    obj = x ** 3 - 3 * x * y ** 2
+    grad = np.zeros(2)
+    grad[0] = 3 * x ** 2 - 3 * y ** 2
+    grad[1] = - 6 * x * y
+    return obj, grad
+
+
+@objective(xstar=None)
+def hyperbolic_paraboloid(theta):
+    """Hyperbolic paraboloid (pringle chip)"""
+    x, y = theta
+    obj = 0.5 * (x ** 2 - y ** 2)
+    grad = np.zeros(2)
+    grad[0] = x
+    grad[1] = -y
     return obj, grad
 
 

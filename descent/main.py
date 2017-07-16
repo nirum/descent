@@ -124,10 +124,11 @@ def gradient_optimizer(coro):
     class GradientOptimizer(Optimizer):
 
         @wraps(coro)
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, callback=None, **kwargs):
             self.algorithm = coro(*args, **kwargs)
             self.algorithm.send(None)
             self.operators = []
+            self.callback = callback
 
         def set_transform(self, func):
             self.transform = compose(destruct, func, self.restruct)
@@ -165,6 +166,10 @@ def gradient_optimizer(coro):
                                                 f,
                                                 np.linalg.norm(destruct(df)),
                                                 tp.humantime(runtimes[-1])]))
+
+                    # run callbacks
+                    if self.callback is not None:
+                        self.callback(k, f, df, self.restruct(xk))
 
                     if k >= maxiter:
                         break
