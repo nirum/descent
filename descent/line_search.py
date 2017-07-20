@@ -16,6 +16,13 @@ def backtracking(f_df, x0, dx, alpha, rho=0.5, c=1e-4):
     alpha : initial step length
     rho : backtracking factor
     c : sufficient decrease condition constant
+
+    Returns
+    -------
+    alpha : step size
+    f : new objective value
+    df : new gradient
+    xk : new iterate
     """
     # current objective value
     f0 = f_df(x0)[0]
@@ -27,4 +34,4 @@ def backtracking(f_df, x0, dx, alpha, rho=0.5, c=1e-4):
         alpha = rho * alpha
         f, df = f_df(x0 + alpha * dx)
 
-    return f, df, x0 + alpha * dx
+    return alpha, f, df, x0 + alpha * dx
