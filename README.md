@@ -5,7 +5,7 @@
 [![Documentation Status](https://readthedocs.org/projects/descent/badge/?version=latest)](http://descent.readthedocs.org/en/latest/?badge=latest)
 [![PyPi version](https://img.shields.io/pypi/v/descent.svg)](https://pypi.python.org/pypi/descent)
 
-Descent is a package for performing first-order optimization in python.
+Descent is a package for performing first- and second-order optimization in python.
 
 Documentation (work in progress) is available at [descent.readthedocs.org](http://descent.readthedocs.org/en/latest/).
 
@@ -26,7 +26,7 @@ MIT. See `LICENSE.md`
 
 ## Requirements
 
-- Python 3.5+
+- Python 3.6+
 - [numpy](http://www.numpy.org)
 - [scipy](http://www.scipy.org)
 - [toolz](https://github.com/pytoolz/toolz)
