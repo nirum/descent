@@ -1,3 +1,6 @@
+"""
+Regularized nonlinear acceleration
+"""
 import numpy as np
 
 __all__ = ['rmpe']

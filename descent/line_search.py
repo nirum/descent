@@ -4,9 +4,9 @@ Line search methods
 import numpy as np
 
 
-def backtracking(f_df, x0, dx, alpha, rho=0.5, c=1e-4):
+def backtracking(f_df, x0, dx, alpha=1., rho=0.5, c=1e-4):
     """
-    Backtracking line search
+    Backtracking-armijo line search
 
     Params
     ------
@@ -34,4 +34,4 @@ def backtracking(f_df, x0, dx, alpha, rho=0.5, c=1e-4):
         alpha = rho * alpha
         f, df = f_df(x0 + alpha * dx)
 
-    return alpha, f, df, x0 + alpha * dx
+    return alpha
