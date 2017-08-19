@@ -10,6 +10,20 @@ __all__ = ['doublewell', 'rosenbrock', 'sphere', 'matyas', 'beale', 'booth', 'mc
 
 
 @value_and_grad
+def separable(theta):
+    x, y = theta
+    return 0.5 * x ** 2 + np.log(np.exp(y) + np.exp(-y))
+
+
+@value_and_grad
+def cd_cubic(theta):
+    """Cubic function from Carmon & Duchi"""
+    A = np.array([[-7., 1.], [1., -7.]])
+    b = np.array([0.2, 0.])
+    return 0.5 * np.linalg.multi_dot((theta.T, A, theta)) + np.inner(b, theta) + (1 / 3) * np.linalg.norm(theta) ** 3
+
+
+@value_and_grad
 def doublewell(theta):
     """Pointwise minimum of two quadratic bowls"""
     k0, k1, depth = 0.01, 100, 0.5
