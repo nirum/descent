@@ -19,7 +19,7 @@ $ pip install descent
 ## Contact
 For bugs, comments, concerns: use the Github issue tracker.
 
-Author: [Niru Maheswaranathan](http://niru.org/), nirum [a] stanford.edu
+Author: [Niru Maheswaranathan](https://niru.dev/)
 
 ## License
 MIT. See `LICENSE.md`

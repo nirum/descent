@@ -1,24 +1,27 @@
+import sys
+from collections import namedtuple, defaultdict
+from functools import wraps
+from itertools import count
+from time import perf_counter
+
+import numpy as np
+import tableprint as tp
+from scipy.optimize import OptimizeResult
+from toolz import compose
+
 from . import proxops
 from .utils import destruct, restruct, wrap
 
-import sys
-from time import perf_counter
-from collections import namedtuple, defaultdict
-from itertools import count
-from functools import wraps
-
-import numpy as np
-from scipy.optimize import OptimizeResult
-from toolz import compose
-import tableprint as tp
-
-__all__ = ['Consensus', 'gradient_optimizer']
+__all__ = ["Consensus", "gradient_optimizer"]
 
 
 class Optimizer:
+    def __init__(self, display):
+        self.display = display
+
     def restruct(self, x):
-        if 'theta' not in self.__dict__:
-            raise KeyError('theta not defined')
+        if "theta" not in self.__dict__:
+            raise KeyError("theta not defined")
         return restruct(x, self.theta)
 
     def optional_print(self, message):
@@ -34,14 +37,16 @@ class Optimizer:
         elif isinstance(operator, proxops.ProximalOperatorBaseClass):
             op = operator
         else:
-            raise ValueError("operator must be a string or a subclass of ProximalOperator")
+            raise ValueError(
+                "operator must be a string or a subclass of ProximalOperator"
+            )
 
         self.operators.append(op)
         return self
 
 
 class Consensus(Optimizer):
-    def __init__(self, tau=(10., 2., 2.), tol=(1e-6, 1e-3)):
+    def __init__(self, tau=(10.0, 2.0, 2.0), tol=(1e-6, 1e-3)):
         """
         Proximal Consensus (ADMM)
 
@@ -57,8 +62,8 @@ class Consensus(Optimizer):
             Primal and Dual residual tolerances
         """
         self.operators = []
-        self.tau = namedtuple('tau', ('init', 'inc', 'dec'))(*tau)
-        self.tol = namedtuple('tol', ('primal', 'dual'))(*tol)
+        self.tau = namedtuple("tau", ("init", "inc", "dec"))(*tau)
+        self.tol = namedtuple("tol", ("primal", "dual"))(*tol)
 
     def minimize(self, x0, display=None, maxiter=np.Inf):
 
@@ -75,21 +80,28 @@ class Consensus(Optimizer):
                 theta_prev = destruct(self.theta)
 
                 # update each primal variable
-                primals = [op(self.restruct(theta_prev - dual), rho).ravel()
-                           for op, dual in zip(self.operators, duals)]
+                primals = [
+                    op(self.restruct(theta_prev - dual), rho).ravel()
+                    for op, dual in zip(self.operators, duals)
+                ]
 
                 # average primal copies
                 theta_avg = np.mean(primals, axis=0)
 
                 # update the dual variables (after primal update has finished)
-                duals = [dual + primal - theta_avg
-                         for dual, primal in zip(duals, primals)]
+                duals = [
+                    dual + primal - theta_avg for dual, primal in zip(duals, primals)
+                ]
 
                 # compute primal and dual residuals
-                primal_resid = float(np.sum([np.linalg.norm(primal - theta_avg)
-                                             for primal in primals]))
-                dual_resid = len(self.operators) * rho ** 2 * \
-                    np.linalg.norm(theta_avg - theta_prev)
+                primal_resid = float(
+                    np.sum([np.linalg.norm(primal - theta_avg) for primal in primals])
+                )
+                dual_resid = (
+                    len(self.operators)
+                    * rho ** 2
+                    * np.linalg.norm(theta_avg - theta_prev)
+                )
 
                 # update penalty parameter according to primal and dual residuals
                 # (see sect. 3.4.1 of the Boyd and Parikh ADMM paper)
@@ -98,9 +110,9 @@ class Consensus(Optimizer):
                 elif dual_resid > self.tau.init * primal_resid:
                     rho /= float(self.tau.dec)
 
-                resid['primal'].append(primal_resid)
-                resid['dual'].append(dual_resid)
-                resid['rho'].append(rho)
+                resid["primal"].append(primal_resid)
+                resid["dual"].append(dual_resid)
+                resid["rho"].append(rho)
 
                 # check for convergence
                 if (primal_resid <= self.tol.primal) & (dual_resid <= self.tol.dual):
@@ -112,17 +124,18 @@ class Consensus(Optimizer):
         except KeyboardInterrupt:
             pass
 
-        return OptimizeResult({
-            'x': self.restruct(theta_avg),
-            'k': k,
-        })
+        return OptimizeResult(
+            {
+                "x": self.restruct(theta_avg),
+                "k": k,
+            }
+        )
 
 
 def gradient_optimizer(coro):
     """Turns a coroutine into a gradient based optimizer."""
 
     class GradientOptimizer(Optimizer):
-
         @wraps(coro)
         def __init__(self, *args, **kwargs):
             self.algorithm = coro(*args, **kwargs)
@@ -148,7 +161,9 @@ def gradient_optimizer(coro):
             obj, grad = wrap(f_df, x0)
             transform = compose(destruct, *reversed(self.operators), self.restruct)
 
-            self.optional_print(tp.header(['Iteration', 'Objective', '||Grad||', 'Runtime']))
+            self.optional_print(
+                tp.header(["Iteration", "Objective", "||Grad||", "Runtime"])
+            )
             try:
                 for k in count():
 
@@ -158,13 +173,19 @@ def gradient_optimizer(coro):
                     df = grad(xk)
                     xk = transform(self.algorithm.send(df))
                     runtimes.append(perf_counter() - tstart)
-                    store['f'].append(f)
+                    store["f"].append(f)
 
                     # Update display
-                    self.optional_print(tp.row([k,
-                                                f,
-                                                np.linalg.norm(destruct(df)),
-                                                tp.humantime(runtimes[-1])]))
+                    self.optional_print(
+                        tp.row(
+                            [
+                                k,
+                                f,
+                                np.linalg.norm(destruct(df)),
+                                tp.humantime(runtimes[-1]),
+                            ]
+                        )
+                    )
 
                     if k >= maxiter:
                         break
@@ -175,20 +196,26 @@ def gradient_optimizer(coro):
             self.optional_print(tp.bottom(4))
 
             # cleanup
-            self.optional_print(u'\u279b Final objective: {}'.format(store['f'][-1]))
-            self.optional_print(u'\u279b Total runtime: {}'.format(tp.humantime(sum(runtimes))))
-            self.optional_print(u'\u279b Per iteration runtime: {} +/- {}'.format(
-                tp.humantime(np.mean(runtimes)),
-                tp.humantime(np.std(runtimes)),
-            ))
+            self.optional_print(u"\u279b Final objective: {}".format(store["f"][-1]))
+            self.optional_print(
+                u"\u279b Total runtime: {}".format(tp.humantime(sum(runtimes)))
+            )
+            self.optional_print(
+                u"\u279b Per iteration runtime: {} +/- {}".format(
+                    tp.humantime(np.mean(runtimes)),
+                    tp.humantime(np.std(runtimes)),
+                )
+            )
 
             # result
-            return OptimizeResult({
-                'x': self.restruct(xk),
-                'f': f,
-                'df': self.restruct(df),
-                'k': k,
-                'obj': np.array(store['f']),
-            })
+            return OptimizeResult(
+                {
+                    "x": self.restruct(xk),
+                    "f": f,
+                    "df": self.restruct(df),
+                    "k": k,
+                    "obj": np.array(store["f"]),
+                }
+            )
 
     return GradientOptimizer

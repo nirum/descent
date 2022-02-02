@@ -1,5 +1,5 @@
 # Version info
-__version__ = '0.2.6'
+__version__ = '0.3.0'
 __license__ = 'MIT'
 
 # Project description(s)
@@ -10,4 +10,4 @@ __url__ = 'https://github.com/nirum/descent'
 
 # Author details
 __author__ = 'Niru Maheswaranathan'
-__author_email__ = 'niru@fastmail.com'
+__author_email__ = 'niru@hey.com'
